@@ -131,63 +131,6 @@ else
   skip "section references (python3 not installed)"
 fi
 
-echo "sync-kit.sh"
-tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT
-mkdir -p "$tmp/flutter/.claude" "$tmp/firebase-functions/.claude" "$tmp/go/.claude"
-echo '{"enabledPlugins":{"core@agent-kit":true,"flutter@agent-kit":true}}' > "$tmp/flutter/.claude/settings.json"
-echo '{"enabledPlugins":{"core@agent-kit":true,"firebase-functions@agent-kit":true}}' > "$tmp/firebase-functions/.claude/settings.json"
-# Only `go`: its dependencies (backend, then core) must come along.
-echo '{"enabledPlugins":{"go@agent-kit":true}}' > "$tmp/go/.claude/settings.json"
-mkdir -p "$tmp/flutter/.claude/rules/ui"
-printf -- '---\ndescription: Sample project rule\npaths:\n  - "lib/**"\n---\n\n# Sample project rule\n\n- Use FooWidget.\n' > "$tmp/flutter/.claude/rules/ui/widgets.md"
-printf -- '---\ndescription: Flow-style paths\npaths: ["test/**", "lib/**/*.{dart,arb}"]\n---\n\n# Flow rule\n' > "$tmp/flutter/.claude/rules/zz-flow.md"
-sync="$kit/plugins/core/scripts/sync-kit.sh"
-for stack in flutter firebase-functions go; do
-  p="$tmp/$stack"
-  [ "$(AGENT_KIT_DIR=$kit bash "$sync" "$p")" = changed ] && ok "$stack: first sync writes files" || bad "$stack: first sync"
-  [ "$(AGENT_KIT_DIR=$kit bash "$sync" "$p")" = unchanged ] && ok "$stack: second sync is a no-op" || bad "$stack: second sync not idempotent"
-  grep -q '^alwaysApply: true' "$p/.cursor/rules/kit/core/minimal-change.mdc" 2>/dev/null && ok "$stack: core rule for Cursor, always applied" || bad "$stack: core rule for Cursor"
-  [ -f "$p/.cursor/rules/kit/working-agreement.mdc" ] && ok "$stack: working agreement for Cursor" || bad "$stack: working agreement for Cursor"
-  [ -f "$p/.cursor/skills/delivering-changes/SKILL.md" ] && ok "$stack: core skills for Cursor" || bad "$stack: core skills for Cursor"
-  rule=$( [ "$stack" = go ] && echo go-architecture || echo architecture )
-  grep -q '^globs: ' "$p/.cursor/rules/kit/$stack/$rule.mdc" && ok "$stack: paths converted to globs" || bad "$stack: globs missing"
-done
-{ [ -f "$tmp/go/.cursor/rules/kit/backend/backend-architecture.mdc" ] && [ -f "$tmp/go/.cursor/skills/designing-api-contracts/SKILL.md" ]; } \
-  && ok "go repo gets backend rules and skills through dependencies" || bad "go repo missing backend through dependencies"
-[ -f "$tmp/firebase-functions/.cursor/rules/kit/backend/backend-security.mdc" ] && ok "functions repo gets backend rules through dependencies" || bad "functions repo missing backend rules"
-[ ! -e "$tmp/firebase-functions/.cursor/rules/kit/go" ] && [ ! -e "$tmp/flutter/.cursor/rules/kit/backend" ] && ok "dependencies add nothing else" || bad "sync added plugins nobody depends on"
-[ ! -e "$tmp/firebase-functions/.cursor/skills/writing-patrol-tests" ] && ok "functions repo gets no Flutter skills" || bad "functions repo got Flutter skills"
-[ ! -e "$tmp/flutter/.cursor/rules/kit/firebase-functions" ] && ok "flutter repo gets no Functions rules" || bad "flutter repo got Functions rules"
-grep -q '^globs: lib/\*\*' "$tmp/flutter/.cursor/rules/kit/project/ui-widgets.mdc" 2>/dev/null && ok "repository rules for Cursor, paths converted to globs" || bad "repository rules for Cursor"
-grep -qxF 'globs: test/**, lib/**/*.{dart,arb}' "$tmp/flutter/.cursor/rules/kit/project/zz-flow.mdc" 2>/dev/null && ok "flow-style paths converted to globs" || bad "flow-style paths not converted"
-[ ! -e "$tmp/firebase-functions/.cursor/rules/kit/project" ] && ok "no project folder without repository rules" || bad "project folder created without repository rules"
-
-# Hostile repository data must not reach outside .cursor/.
-evil="$tmp/evil"
-mkdir -p "$evil/.claude" "$evil/.cursor/skills" "$tmp/victim"
-touch "$tmp/victim/keep"
-echo '{"enabledPlugins":{"core@agent-kit":true,"../../victim@agent-kit":true}}' > "$evil/.claude/settings.json"
-printf '../../victim\n' > "$evil/.cursor/skills/.agent-kit"
-AGENT_KIT_DIR=$kit bash "$sync" "$evil" >/dev/null
-[ -f "$tmp/victim/keep" ] && ok "manifest entries with paths are not deleted" || bad "sync deleted outside .cursor/skills via the manifest"
-[ ! -e "$evil/.cursor/rules/victim" ] && [ ! -e "$tmp/victim/architecture.mdc" ] && ok "unknown plugin names are ignored" || bad "sync wrote rules for an unknown plugin name"
-link="$tmp/link"
-mkdir -p "$link/.claude" "$link/.cursor" "$tmp/linked"
-echo '{"enabledPlugins":{"core@agent-kit":true}}' > "$link/.claude/settings.json"
-ln -s "$tmp/linked" "$link/.cursor/skills"
-out=$(AGENT_KIT_DIR=$kit bash "$sync" "$link")
-{ [ -z "$(ls -A "$tmp/linked")" ] && echo "$out" | grep -q symlink; } && ok "symlinked .cursor targets are refused" || bad "sync wrote through a symlink"
-
-planted="$tmp/planted"
-mkdir -p "$planted/.claude" "$planted/.cursor/skills/delivering-changes"
-echo '{"enabledPlugins":{"core@agent-kit":true}}' > "$planted/.claude/settings.json"
-echo original > "$tmp/victim/target"
-ln -s "$tmp/victim/target" "$planted/.cursor/skills/delivering-changes/SKILL.md"
-AGENT_KIT_DIR=$kit bash "$sync" "$planted" >/dev/null
-{ [ "$(cat "$tmp/victim/target")" = original ] && [ ! -L "$planted/.cursor/skills/delivering-changes/SKILL.md" ]; } \
-  && ok "symlinks inside a planted skill folder are not written through" || bad "sync wrote through a symlink inside a skill folder"
-
 echo "Hooks"
 check="$kit/plugins/core/scripts/check-edited-file.sh"
 if command -v dart >/dev/null 2>&1; then
@@ -202,7 +145,11 @@ if command -v gofmt >/dev/null 2>&1; then
 else
   skip "edit hook Go checks (go not installed)"
 fi
-out=$(CLAUDE_PROJECT_DIR="$tmp/flutter" AGENT_KIT_DIR="$kit" bash "$kit/plugins/core/scripts/session-start.sh")
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/flutter/.claude/rules/ui" "$tmp/firebase-functions/.claude"
+printf -- '---\ndescription: Sample project rule\npaths:\n  - "lib/**"\n---\n\n# Sample project rule\n\n- Use FooWidget.\n' > "$tmp/flutter/.claude/rules/ui/widgets.md"
+out=$(CLAUDE_PROJECT_DIR="$tmp/flutter" bash "$kit/plugins/core/scripts/session-start.sh")
 echo "$out" | grep -q '^# Working agreement' && ok "session hook prints the working agreement" || bad "session hook output"
 out=$(CLAUDE_PROJECT_DIR="$tmp/flutter" bash "$kit/plugins/core/scripts/print-project-rules.sh")
 echo "$out" | jq -e '.hookSpecificOutput.hookEventName == "SubagentStart" and (.hookSpecificOutput.additionalContext | startswith("# Sample project rule"))' >/dev/null 2>&1 \

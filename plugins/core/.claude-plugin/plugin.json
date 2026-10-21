@@ -1,6 +1,6 @@
 {
   "name": "core",
   "displayName": "Agent Kit Core",
-  "description": "Stack-independent: working agreement, architecture principles (spec-driven, contract-first, Clean Architecture, DDD, TDD) and engineering principles for code (SOLID, DRY, KISS, YAGNI), delivery rule (feature branches, task PRs, tests first, review loop, merge policy), lead workflow (delivering-changes, shipping-feature-branch), review loop and branch review, debugging, grind-to-green, developer and reviewer subagents, project rules for subagents, session-start Cursor sync and analyzer-on-edit hooks.",
+  "description": "Stack-independent: working agreement, architecture principles (spec-driven, contract-first, Clean Architecture, DDD, TDD) and engineering principles for code (SOLID, DRY, KISS, YAGNI), delivery rule (feature branches, task PRs, tests first, review loop, merge policy), lead workflow (delivering-changes, shipping-feature-branch), review loop and branch review, debugging, grind-to-green, developer and reviewer subagents, project rules for subagents, session-start and analyzer-on-edit hooks.",
   "repository": "https://github.com/ddvhn/agent-kit"
 }
