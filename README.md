@@ -73,12 +73,27 @@ Then write `CLAUDE.md` with the sections above and put project conventions in `.
 
 ## Cloud sessions
 
-A cloud environment does not read repository settings when its session starts above the repositories, so install the kit in the environment's setup script. It installs every plugin in the marketplace; stack plugins stay silent where their stack is absent, so new plugins need no change here:
+Cloud sessions (Claude Code on the web, the desktop app, and project threads on claude.ai) run in a container built from a **cloud environment**. When a session starts above the repositories, which is how cloud sessions over several repositories start, the container does not read `.claude/settings.json`. Install the kit in the environment's setup script instead.
 
-```bash
-claude plugin marketplace add ddvhn/agent-kit || true
-for p in $(python3 -c "import json,os;print(' '.join(p['name'] for p in json.load(open(os.path.expanduser('~/.claude/plugins/marketplaces/agent-kit/.claude-plugin/marketplace.json')))['plugins']))"); do claude plugin install "$p@agent-kit" || true; done
-```
+1. Open the cloud environment's settings. In a claude.ai project: Project settings → Cloud environment → the gear beside the selected environment. For a standalone session: the environment picker → the gear beside the environment.
+2. Paste into **Setup script**:
+
+   ```bash
+   exec >~/agent-kit-setup.log 2>&1
+   set -x
+   date
+   claude plugin marketplace add ddvhn/agent-kit || true
+   for p in $(python3 -c "import json,os;print(' '.join(p['name'] for p in json.load(open(os.path.expanduser('~/.claude/plugins/marketplaces/agent-kit/.claude-plugin/marketplace.json')))['plugins']))"); do claude plugin install "$p@agent-kit" || true; done
+   ```
+
+   The script installs every plugin listed in the marketplace, so a new plugin needs no change here. Stack plugins stay silent where their stack is absent. The log goes to `~/agent-kit-setup.log`.
+3. Select that environment in every project or session that should get the kit. Environments belong to the account, not the project: one environment serves every project that selects it, and an edit to its script reaches all of them.
+4. Start a new session and check that the working agreement is in its context.
+
+If the kit is missing in a new session, check two things:
+
+- Whether the project has the environment selected. Without one, sessions run on the default environment and the script never runs.
+- Whether the script was skipped. A new session can resume from a cached container; `/tmp/env-manager.log` then says "Fast resume … Skipping initialization script", and `~/agent-kit-setup.log` is missing. Any edit to the setup script invalidates the cache, so the next session runs it.
 
 ## One-time setup per machine
 
