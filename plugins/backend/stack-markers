@@ -1,0 +1,4 @@
+# <file name> <extended regex>: the stack is present when such a file under the project folder matches.
+# Every backend stack plugin that depends on backend adds its markers here.
+go.mod ^module[[:space:]]
+package.json "firebase-functions"[[:space:]]*:

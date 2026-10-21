@@ -1,0 +1,62 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "dev-debug",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "args": ["--flavor", "dev"]
+    },
+    {
+      "name": "dev-agent",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "args": ["--flavor", "dev"],
+      "toolArgs": [
+        "--host-vmservice-port=8181",
+        "--disable-service-auth-codes"
+      ]
+    },
+    {
+      "name": "dev-local",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "args": [
+        "--flavor",
+        "dev",
+        "--dart-define-from-file=.dart_defines.local.json"
+      ]
+    },
+    {
+      "name": "mock",
+      "type": "dart",
+      "request": "launch",
+      "program": "test/main_mock.dart",
+      "flutterMode": "debug",
+      "args": ["--flavor", "dev"]
+    },
+    {
+      "name": "web-dev",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main_web.dart",
+      "flutterMode": "debug",
+      "deviceId": "chrome",
+      "args": ["--dart-define-from-file=config/web/dev.json"]
+    },
+    {
+      "name": "release-staging",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "flutterMode": "release",
+      "args": ["--flavor", "staging"]
+    }
+  ]
+}

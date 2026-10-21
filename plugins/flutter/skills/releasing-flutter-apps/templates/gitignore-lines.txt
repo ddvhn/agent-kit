@@ -1,0 +1,6 @@
+# fastlane: append to the repository's .gitignore
+fastlane/.env
+fastlane/keys/
+fastlane/report.xml
+fastlane/README.md
+build/fastlane/

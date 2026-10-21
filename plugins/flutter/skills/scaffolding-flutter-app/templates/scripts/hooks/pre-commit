@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Formatter, analyzer, and secret scan on staged changes. Never skipped with
+# --no-verify; fix the finding instead.
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACM -- '*.dart')
+if [ -n "$staged" ]; then
+  echo "$staged" | xargs dart format --output=none --set-exit-if-changed
+  flutter analyze --no-pub
+fi
+gitleaks git --pre-commit --staged --redact --no-banner

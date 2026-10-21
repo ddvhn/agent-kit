@@ -1,0 +1,2 @@
+# <file name> <extended regex>: the stack is present when such a file under the project folder matches.
+go.mod ^module[[:space:]]

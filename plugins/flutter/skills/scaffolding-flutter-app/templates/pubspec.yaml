@@ -1,0 +1,43 @@
+# Workspace root and the app (composition root). Versions: current stable at
+# scaffold time (`flutter pub add` / `flutter pub outdated`), not these.
+name: foo_app
+description: Foo
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+workspace:
+  - modules/domain
+  - modules/data
+  - modules/ui
+  - modules/utils
+  - modules/logger
+  - modules/localization
+  # - modules/analytics   # optional, see SKILL.md
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins: # usePathUrlStrategy in lib/main_web.dart (web apps only)
+    sdk: flutter
+  domain:
+    path: modules/domain
+  data:
+    path: modules/data
+  ui:
+    path: modules/ui
+  log:
+    path: modules/logger
+  get_it: ^9.2.1
+  marionette_flutter: ^0.7.0 # debug binding for live checks (driving-flutter-app)
+  path_provider: ^2.1.5 # the logs directory, passed to initializeLogger
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

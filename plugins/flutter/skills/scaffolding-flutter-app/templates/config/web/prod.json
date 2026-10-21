@@ -1,0 +1,5 @@
+{
+  "ENVIRONMENT": "prod",
+  "API_BASE_URL": "https://api.example.com",
+  "PROD_SERVICES": "true"
+}

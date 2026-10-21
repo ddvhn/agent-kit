@@ -1,0 +1,61 @@
+# Shared by every package: each package's analysis_options.yaml is
+# `include: ../../analysis_options.yaml`.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/test_bundle.dart"
+    - "build/**"
+    - "**/build/**"
+    - "modules/localization/lib/generated/**"
+    - "modules/generated_api/**" # generating-api-clients
+
+formatter:
+  page_width: 80
+
+linter:
+  rules:
+    always_declare_return_types: true
+    always_use_package_imports: true
+    avoid_dynamic_calls: true
+    avoid_empty_else: true
+    avoid_escaping_inner_quotes: true
+    avoid_print: true
+    avoid_relative_lib_imports: true
+    avoid_renaming_method_parameters: true
+    avoid_web_libraries_in_flutter: true
+    await_only_futures: true
+    cancel_subscriptions: true
+    depend_on_referenced_packages: true
+    eol_at_end_of_file: true
+    exhaustive_cases: true
+    file_names: true
+    hash_and_equals: true
+    lines_longer_than_80_chars: true
+    omit_local_variable_types: true
+    only_throw_errors: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_expression_function_bodies: true
+    prefer_final_fields: true
+    prefer_final_in_for_each: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    recursive_getters: true
+    unawaited_futures: true
+    unnecessary_await_in_return: true
+    unnecessary_const: true
+    unnecessary_late: true
+    unnecessary_library_name: true
+    unnecessary_this: true
+    unnecessary_unawaited: true
+    use_build_context_synchronously: true
+    use_rethrow_when_possible: true
+    use_super_parameters: true

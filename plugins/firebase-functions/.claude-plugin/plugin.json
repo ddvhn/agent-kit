@@ -1,0 +1,9 @@
+{
+  "name": "firebase-functions",
+  "displayName": "Agent Kit Firebase Functions",
+  "description": "TypeScript Firebase Cloud Functions backends on the backend principles, with Firebase as an adopted platform: layered architecture, platform overrides, TypeScript, data and testing rules; skills for scaffolding a backend, callables, background functions (triggers, schedules, task queues), Firestore, repositories, security rules and indexes, emulator testing, npm updates.",
+  "dependencies": [
+    "backend"
+  ],
+  "repository": "https://github.com/ddvhn/agent-kit"
+}

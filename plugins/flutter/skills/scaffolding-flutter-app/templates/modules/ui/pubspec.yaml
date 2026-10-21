@@ -1,0 +1,36 @@
+# Blocs, UI models, pages, widgets, navigation, theme. Never depends on data.
+name: ui
+description: UI layer
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  domain:
+    path: ../domain
+  localization:
+    path: ../localization
+  log:
+    path: ../logger
+  equatable: ^3.0.0
+  flutter_bloc: ^9.1.1
+  get_it: ^9.2.1
+  go_router: ^18.0.0
+  skeletonizer: ^3.0.0
+  universal_platform: ^1.1.0
+  # Presentation-only plugins (url_launcher, share_plus, haptics) may live here;
+  # anything that stores, plays, fetches, or tracks goes to data.
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.5.0
+  go_router_builder: ^4.4.1
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true

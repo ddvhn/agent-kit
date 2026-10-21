@@ -1,0 +1,5 @@
+# Appended to the Flutter-generated .gitignore
+**/test_bundle.dart
+.patrol.env
+coverage/
+.dart_defines.local.json

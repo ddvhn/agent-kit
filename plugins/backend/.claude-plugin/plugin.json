@@ -1,0 +1,9 @@
+{
+  "name": "backend",
+  "displayName": "Agent Kit Backend",
+  "description": "Stack-independent backend principles: feature-first modules with clean layers, contract-first REST API, security and multi-tenancy, data and migrations, jobs and client sync, load, observability, vendor independence, operations, and testing; skills for API contracts, tenant isolation in Postgres, client sync, security audits, load planning, and operations.",
+  "dependencies": [
+    "core"
+  ],
+  "repository": "https://github.com/ddvhn/agent-kit"
+}

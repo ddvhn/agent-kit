@@ -1,0 +1,22 @@
+# gen-l10n output and the BuildContext accessor (localizing-flutter-apps).
+name: localization
+description: App copy
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any # pinned by flutter_localizations
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  generate: true

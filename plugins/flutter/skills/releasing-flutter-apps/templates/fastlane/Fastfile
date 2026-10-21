@@ -1,0 +1,528 @@
+# Builds, tests, and uploads the mobile apps. Procedure: the releasing-flutter-apps skill.
+#
+#   bundle exec fastlane ios dev          # unit tests → IPA → TestFlight → tag
+#   bundle exec fastlane android dev      # unit tests → AAB → Play internal → tag
+#   bundle exec fastlane ios staging      # same for staging
+#   bundle exec fastlane ios prod         # release branch only: version check → … → TestFlight
+#   bundle exec fastlane android prod     # release branch only: version check → … → Play internal
+#   bundle exec fastlane android build_prod / upload_prod   # the two halves on their own
+#
+# Prod lanes never submit for review and never roll out: a human promotes the
+# build in App Store Connect / Play Console.
+# Options: build_number:N, tests:unit|none, allow_dirty:true (local build only,
+# never uploadable), notes:"…" or notes:none (no What to Test, no waiting).
+# Credentials come only from the environment (fastlane/.env locally, CI
+# secrets): see fastlane/.env.example.
+
+require "base64"
+require "fileutils"
+require "json"
+require "open3"
+require "shellwords"
+require "tmpdir"
+
+opt_out_usage
+
+ENV["FASTLANE_SKIP_DOCS"] ||= "1"
+ENV["FASTLANE_HIDE_CHANGELOG"] ||= "1"
+
+ROOT = File.expand_path("..", __dir__)
+OUTPUT = File.join(ROOT, "build/fastlane")
+
+# One entry per flavor (configuring-flutter-flavors). tag_stage is the first
+# part of the tag; dart_defines turn on production services for prod only.
+APPS = {
+  dev: {
+    flavor: "dev",
+    name: "Foo-Dev",
+    ios_bundle_id: "com.example.foo.dev",
+    android_package: "com.example.foo.dev",
+    tag_stage: "dev",
+    dart_defines: []
+  }.freeze,
+  staging: {
+    flavor: "staging",
+    name: "Foo-Staging",
+    ios_bundle_id: "com.example.foo.staging",
+    android_package: "com.example.foo.staging",
+    tag_stage: "staging",
+    dart_defines: []
+  }.freeze,
+  prod: {
+    flavor: "prod",
+    name: "Foo",
+    ios_bundle_id: "com.example.foo",
+    android_package: "com.example.foo",
+    tag_stage: "prod",
+    dart_defines: %w[PROD_SERVICES=true]
+  }.freeze
+}.freeze
+PLAY_TRACKS = %w[internal alpha beta production].freeze
+# Prod builds come only from this branch on the remote.
+RELEASE_BRANCH = "main"
+TEMP_FILES = []
+TEMP_PROPERTIES_MARKER = "# Written by fastlane from ANDROID_KEY* variables; deleted after the run."
+
+# --- helpers ------------------------------------------------------------------
+
+def flag?(options, key)
+  %w[true 1 yes].include?(options[key].to_s.downcase)
+end
+
+def env?(name)
+  !ENV[name].to_s.empty?
+end
+
+def prod?(app)
+  app[:flavor] == "prod"
+end
+
+def require_env(*names, reason: nil)
+  missing = names.reject { |name| env?(name) }
+  return if missing.empty?
+
+  UI.user_error!([reason, "Missing environment variables: #{missing.join(", ")} " \
+                          "(see fastlane/.env.example)"].compact.join("\n"))
+end
+
+def git(*args)
+  out, status = Open3.capture2e("git", *args, chdir: ROOT)
+  [out.strip, status.success?]
+end
+
+def git_remote
+  ENV.fetch("GIT_REMOTE", "origin")
+end
+
+def head_commit
+  git("rev-parse", "HEAD")[0]
+end
+
+def pubspec_version
+  version = File.read(File.join(ROOT, "pubspec.yaml"))[/^version:\s*(\S+)/, 1]
+  UI.user_error!("No version in pubspec.yaml") unless version
+  version.split("+").first
+end
+
+def flutter(*args)
+  Dir.chdir(ROOT) { sh("flutter", *args.map(&:to_s)) }
+end
+
+def flutter_build_args(app, build_number)
+  ["--release", "--flavor", app[:flavor], "--build-number", build_number,
+   *app[:dart_defines].map { |define| "--dart-define=#{define}" }]
+end
+
+def remove_temp_files
+  TEMP_FILES.each { |path| FileUtils.rm_rf(path) }
+  TEMP_FILES.clear
+end
+
+after_all { |_lane| remove_temp_files }
+error { |_lane, _exception| remove_temp_files }
+
+# --- preflight ----------------------------------------------------------------
+
+def ensure_flutter_version
+  expected = File.read(File.join(ROOT, ".flutter-version")).strip
+  out, = Open3.capture2("flutter", "--version", "--machine")
+  json = out.index("{") && out[out.index("{")..]
+  UI.user_error!("flutter --version --machine failed: is Flutter on PATH?") unless json
+  actual = JSON.parse(json)["frameworkVersion"]
+  UI.user_error!("Flutter #{actual}, expected #{expected} (.flutter-version)") unless actual == expected
+end
+
+# Dev and staging: the commit is on the remote. Prod: it is on the release branch.
+def ensure_pushed(commit, app)
+  remote = git_remote
+  git("fetch", remote, "--tags", "--quiet")
+  if prod?(app)
+    return if git("merge-base", "--is-ancestor", commit, "#{remote}/#{RELEASE_BRANCH}")[1]
+
+    UI.user_error!("#{commit[0, 8]} is not on #{remote}/#{RELEASE_BRANCH}: prod builds come " \
+                   "from #{RELEASE_BRANCH} only")
+  end
+  branches, = git("branch", "-r", "--contains", commit)
+  return if branches.lines.any? { |line| line.strip.start_with?("#{remote}/") }
+
+  UI.user_error!("#{commit[0, 8]} is not on #{remote}: push it first")
+end
+
+def preflight(options, app)
+  ensure_bundle_exec
+  ensure_flutter_version
+  UI.user_error!("No git identity: the annotated tag needs one") unless git("var", "GIT_COMMITTER_IDENT")[1]
+  if flag?(options, :allow_dirty)
+    UI.important("allow_dirty: this build is local only and cannot be uploaded")
+  else
+    ensure_git_status_clean
+    ensure_pushed(head_commit, app)
+  end
+end
+
+def ensure_version_newer(version, live, store_name)
+  return UI.success("#{version} > #{live} live on #{store_name}") if Gem::Version.new(version) > Gem::Version.new(live)
+
+  UI.user_error!("pubspec.yaml version #{version} must be greater than #{live} live on #{store_name}")
+end
+
+def run_unit_tests(options)
+  return UI.important("tests:none: skipping tests") if options[:tests].to_s == "none"
+
+  Dir.chdir(ROOT) { sh("scripts/test.sh", "unit") }
+end
+
+# --- tags ---------------------------------------------------------------------
+
+# {stage}/{platform}/{version}+{build}, e.g. prod/android/1.4.0+57.
+def tag_name(stage, platform, version, build_number)
+  "#{stage}/#{platform}/#{version}+#{build_number}"
+end
+
+def ensure_tag_free(tag)
+  remote, = git("ls-remote", "--tags", git_remote, "refs/tags/#{tag}")
+  local, = git("tag", "--list", tag)
+  return UI.success("Tag #{tag} is free") if remote.empty? && local.empty?
+
+  UI.user_error!("Tag #{tag} exists: this build was already uploaded (pass build_number:N)")
+end
+
+# The tag means the store accepted the upload.
+def tag_build(app, info, store_name)
+  message = "#{app[:name]} #{info[:version]} (#{info[:build_number]}) uploaded to #{store_name}"
+  out, ok = git("tag", "-a", info[:tag], "-m", message, info[:commit])
+  out, ok = git("push", git_remote, "refs/tags/#{info[:tag]}") if ok
+  return UI.success("Tagged #{info[:commit][0, 8]} as #{info[:tag]}") if ok
+
+  UI.user_error!("Uploaded, but tagging failed (do not upload again; tag by hand):\n#{out}")
+end
+
+def release_notes(options, info, limit)
+  notes = options[:notes].to_s
+  notes = "" if notes == "none"
+  if notes.empty?
+    # Commits since the previous tag of this stage and platform; without a tag
+    # (the first release, or a lane that builds none) the last 20 commits.
+    found = false
+    if info[:tag]
+      stage_platform = info[:tag].split("/")[0, 2].join("/")
+      previous, found = git("describe", "--tags", "--abbrev=0", "--match", "#{stage_platform}/*",
+                            "--exclude", info[:tag], info[:commit])
+    end
+    range = found ? ["#{previous.strip}..#{info[:commit]}"] : ["-n", "20", info[:commit]]
+    log, = git("log", "--no-merges", "--pretty=format:- %s", *range)
+    notes = log
+  end
+  notes.length > limit ? "#{notes[0, limit - 1]}…" : notes
+end
+
+# --- build info ---------------------------------------------------------------
+
+def output_dir(app, platform)
+  File.join(OUTPUT, app[:flavor], platform.to_s).tap { |dir| FileUtils.mkdir_p(dir) }
+end
+
+def write_build_info(app, platform, version, build_number, tag, artifact)
+  info = {
+    flavor: app[:flavor], version: version, build_number: build_number, tag: tag,
+    commit: head_commit, clean: git("status", "--porcelain")[0].empty?,
+    artifact: artifact.delete_prefix("#{ROOT}/")
+  }
+  File.write(File.join(output_dir(app, platform), "build-info.json"), JSON.pretty_generate(info))
+  UI.success("#{info[:artifact]} (#{version} build #{build_number})")
+end
+
+def read_build_info(app, platform)
+  path = File.join(OUTPUT, app[:flavor], platform.to_s, "build-info.json")
+  UI.user_error!("No #{path}: run the build lane first") unless File.exist?(path)
+  info = JSON.parse(File.read(path), symbolize_names: true)
+  UI.user_error!("#{info[:artifact]} was built from a dirty tree") unless info[:clean]
+  info[:artifact_path] = File.join(ROOT, info[:artifact])
+  ensure_pushed(info[:commit], app)
+  info
+end
+
+# --- credentials --------------------------------------------------------------
+
+# App Store Connect API key (.p8 path, or base64 content on CI).
+def asc_key
+  require_env("APP_STORE_CONNECT_API_KEY_KEY_ID", "APP_STORE_CONNECT_API_KEY_ISSUER_ID")
+  key_id = ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"]
+  path = ENV["APP_STORE_CONNECT_API_KEY_KEY_FILEPATH"]
+  if path.to_s.empty?
+    require_env("APP_STORE_CONNECT_API_KEY_KEY_BASE64", reason: "Set _KEY_FILEPATH or _KEY_BASE64")
+    path = File.join(Dir.tmpdir, "AuthKey_#{key_id}_#{Process.pid}.p8")
+    File.write(path, Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_KEY_BASE64"]))
+    TEMP_FILES << path
+  end
+  path = File.expand_path(path, ROOT)
+  issuer_id = ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"]
+  {
+    path: path, key_id: key_id, issuer_id: issuer_id,
+    api_key: app_store_connect_api_key(key_id: key_id, issuer_id: issuer_id, key_filepath: path)
+  }
+end
+
+# Play service account JSON (path, or content on CI).
+def play_key
+  return { json_key: File.expand_path(ENV["SUPPLY_JSON_KEY"], ROOT) } if env?("SUPPLY_JSON_KEY")
+  return { json_key_data: ENV["SUPPLY_JSON_KEY_DATA"] } if env?("SUPPLY_JSON_KEY_DATA")
+
+  require_env("SUPPLY_JSON_KEY", reason: "Set SUPPLY_JSON_KEY or SUPPLY_JSON_KEY_DATA")
+end
+
+# Gradle signs with android/key.properties; CI writes a temporary one.
+def android_signing
+  properties = File.join(ROOT, "android/key.properties")
+  if File.exist?(properties)
+    return unless File.read(properties).start_with?(TEMP_PROPERTIES_MARKER)
+
+    FileUtils.rm_f(properties)
+  end
+  require_env("ANDROID_KEYSTORE_BASE64", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS",
+              "ANDROID_KEY_PASSWORD", reason: "android/key.properties is missing")
+  keystore = File.join(Dir.tmpdir, "upload-#{Process.pid}.jks")
+  File.binwrite(keystore, Base64.decode64(ENV["ANDROID_KEYSTORE_BASE64"]))
+  File.write(properties, <<~PROPERTIES)
+    #{TEMP_PROPERTIES_MARKER}
+    storeFile=#{keystore}
+    storePassword=#{ENV["ANDROID_KEYSTORE_PASSWORD"]}
+    keyAlias=#{ENV["ANDROID_KEY_ALIAS"]}
+    keyPassword=#{ENV["ANDROID_KEY_PASSWORD"]}
+  PROPERTIES
+  TEMP_FILES.push(keystore, properties)
+end
+
+# --- iOS ----------------------------------------------------------------------
+
+def build_ios(options, app)
+  preflight(options, app)
+  require_env("IOS_TEAM_ID")
+  key = asc_key
+  version = pubspec_version
+  if prod?(app)
+    live = begin
+      app_store_build_number(api_key: key[:api_key], app_identifier: app[:ios_bundle_id], live: true)
+      lane_context[SharedValues::LATEST_VERSION]
+    rescue StandardError => e
+      raise unless e.message.match?(/no (live|build)|could not find/i) # first release only
+
+      "0.0.0"
+    end
+    ensure_version_newer(version, live, "the App Store")
+  end
+  build_number = options[:build_number]&.to_i ||
+                 latest_testflight_build_number(api_key: key[:api_key],
+                                                app_identifier: app[:ios_bundle_id],
+                                                initial_build_number: 0) + 1
+  tag = tag_name(app[:tag_stage], "ios", version, build_number)
+  ensure_tag_free(tag)
+  run_unit_tests(options)
+
+  # Flutter writes Generated.xcconfig (flavor, build number, defines); gym archives and signs.
+  flutter("build", "ios", "--config-only", *flutter_build_args(app, build_number))
+  dir = output_dir(app, :ios)
+  ipa = build_app(
+    workspace: File.join(ROOT, "ios/Runner.xcworkspace"),
+    scheme: app[:flavor],
+    configuration: "Release-#{app[:flavor]}",
+    export_method: "app-store",
+    export_team_id: ENV["IOS_TEAM_ID"],
+    output_directory: dir,
+    output_name: "#{app[:name]}.ipa",
+    buildlog_path: File.join(dir, "logs"),
+    xcargs: ["-allowProvisioningUpdates",
+             "-authenticationKeyPath", key[:path],
+             "-authenticationKeyID", key[:key_id],
+             "-authenticationKeyIssuerID", key[:issuer_id]].shelljoin,
+    clean: true
+  )
+  write_build_info(app, :ios, version, build_number, tag, ipa)
+end
+
+def upload_ios(options, app)
+  ensure_bundle_exec
+  info = read_build_info(app, :ios)
+  ensure_tag_free(info[:tag])
+  key = asc_key
+  # Prod: no tester groups, no external testing; a human submits for review.
+  groups = prod?(app) ? [] : ENV["TESTFLIGHT_GROUPS"].to_s.split(",").map(&:strip).reject(&:empty?)
+  # Upload the binary alone and tag as soon as App Store Connect has it.
+  upload_to_testflight(
+    api_key: key[:api_key],
+    app_identifier: app[:ios_bundle_id],
+    ipa: info[:artifact_path],
+    skip_submission: true,
+    skip_waiting_for_build_processing: true
+  )
+  tag_build(app, info, "TestFlight")
+  return UI.important("notes:none: no What to Test, no groups") if options[:notes].to_s == "none"
+
+  # What to Test and groups need the processed build. distribute_only does not
+  # wait for processing (pilot's BuildManager#distribute stops early on an
+  # unprocessed build), so wait here first.
+  wait_for_testflight_processing(app, info)
+  upload_to_testflight(
+    api_key: key[:api_key],
+    app_identifier: app[:ios_bundle_id],
+    distribute_only: true,
+    app_platform: "ios",
+    app_version: info[:version],
+    build_number: info[:build_number].to_s,
+    changelog: release_notes(options, info, 4000),
+    groups: groups.empty? ? nil : groups,
+    distribute_external: false
+  )
+end
+
+# Polls App Store Connect until this version and build finished processing
+# (the token comes from asc_key's app_store_connect_api_key).
+def wait_for_testflight_processing(app, info)
+  asc_app = Spaceship::ConnectAPI::App.find(app[:ios_bundle_id])
+  UI.user_error!("No App Store Connect app for #{app[:ios_bundle_id]}") unless asc_app
+  FastlaneCore::BuildWatcher.wait_for_build_processing_to_be_complete(
+    app_id: asc_app.id,
+    platform: "ios",
+    app_version: info[:version],
+    build_version: info[:build_number].to_s,
+    poll_interval: 30,
+    timeout_duration: 60 * 60,
+    return_spaceship_testflight_build: false,
+    wait_for_build_beta_detail_processing: true
+  )
+end
+
+# --- Android ------------------------------------------------------------------
+
+# The highest version code on any Play track + 1 (a track not created yet is empty).
+def next_play_version_code(app, key)
+  codes = PLAY_TRACKS.flat_map do |track|
+    google_play_track_version_codes(package_name: app[:android_package], track: track, **key)
+  rescue StandardError => e
+    raise unless e.message.match?(/track/i)
+
+    []
+  end
+  (codes.max || 0) + 1
+end
+
+def build_android(options, app)
+  preflight(options, app)
+  android_signing
+  key = play_key
+  version = pubspec_version
+  if prod?(app)
+    names = begin
+      google_play_track_release_names(package_name: app[:android_package], track: "production", **key)
+    rescue StandardError => e
+      raise unless e.message.match?(/track/i) # no production release yet
+
+      []
+    end
+    live = names.filter_map { |name| name[/\d+\.\d+\.\d+/] }.max_by { |v| Gem::Version.new(v) } || "0.0.0"
+    ensure_version_newer(version, live, "Google Play")
+  end
+  build_number = options[:build_number]&.to_i || next_play_version_code(app, key)
+  tag = tag_name(app[:tag_stage], "android", version, build_number)
+  ensure_tag_free(tag)
+  run_unit_tests(options)
+
+  flutter("build", "appbundle", *flutter_build_args(app, build_number))
+  flavor = app[:flavor]
+  aab = File.join(output_dir(app, :android), "#{app[:name]}.aab")
+  FileUtils.cp(File.join(ROOT, "build/app/outputs/bundle/#{flavor}Release/app-#{flavor}-release.aab"), aab)
+  write_build_info(app, :android, version, build_number, tag, aab)
+end
+
+def upload_android(options, app)
+  ensure_bundle_exec
+  info = read_build_info(app, :android)
+  ensure_tag_free(info[:tag])
+  metadata = nil
+  if env?("PLAY_RELEASE_NOTES_LANGUAGE")
+    metadata = Dir.mktmpdir("play-metadata")
+    TEMP_FILES << metadata
+    changelogs = File.join(metadata, ENV["PLAY_RELEASE_NOTES_LANGUAGE"], "changelogs")
+    FileUtils.mkdir_p(changelogs)
+    File.write(File.join(changelogs, "#{info[:build_number]}.txt"), release_notes(options, info, 500))
+  end
+  upload_to_play_store(
+    package_name: app[:android_package],
+    track: "internal", # a human promotes to production
+    aab: info[:artifact_path],
+    version_name: "#{info[:build_number]} (#{info[:version]})",
+    release_status: ENV.fetch("PLAY_RELEASE_STATUS", "completed"),
+    metadata_path: metadata,
+    skip_upload_changelogs: metadata.nil?,
+    skip_upload_metadata: true,
+    skip_upload_images: true,
+    skip_upload_screenshots: true,
+    **play_key
+  )
+  tag_build(app, info, "Google Play")
+end
+
+# --- lanes --------------------------------------------------------------------
+
+platform :ios do
+  APPS.each_value do |app|
+    desc "Build the #{app[:flavor]} IPA (build_number:N, tests:unit|none, allow_dirty:true)"
+    lane :"build_#{app[:flavor]}" do |options|
+      build_ios(options, app)
+    end
+
+    desc "Upload the built #{app[:flavor]} IPA to TestFlight, then tag the commit"
+    lane :"upload_#{app[:flavor]}" do |options|
+      upload_ios(options, app)
+    end
+
+    desc "build_#{app[:flavor]} + upload_#{app[:flavor]}"
+    lane app[:flavor].to_sym do |options|
+      UI.user_error!("allow_dirty builds are never uploaded") if flag?(options, :allow_dirty)
+      build_ios(options, app)
+      upload_ios(options, app)
+    end
+  end
+end
+
+platform :android do
+  APPS.each_value do |app|
+    desc "Build the #{app[:flavor]} AAB (build_number:N, tests:unit|none, allow_dirty:true)"
+    lane :"build_#{app[:flavor]}" do |options|
+      build_android(options, app)
+    end
+
+    desc "Upload the built #{app[:flavor]} AAB to the Play internal track, then tag the commit"
+    lane :"upload_#{app[:flavor]}" do |options|
+      upload_android(options, app)
+    end
+
+    desc "build_#{app[:flavor]} + upload_#{app[:flavor]}"
+    lane app[:flavor].to_sym do |options|
+      UI.user_error!("allow_dirty builds are never uploaded") if flag?(options, :allow_dirty)
+      build_android(options, app)
+      upload_android(options, app)
+    end
+  end
+
+  # Optional: tester builds through Firebase App Distribution (Pluginfile).
+  # The build number still comes from the store (latest + 1), so a later
+  # Play upload never collides with or falls behind a distributed build.
+  # desc "Build the dev APK and send it to Firebase App Distribution testers"
+  # lane :firebase_dev do |options|
+  #   app = APPS[:dev]
+  #   preflight(options, app)
+  #   android_signing
+  #   run_unit_tests(options)
+  #   build_number = next_play_version_code(app, play_key)
+  #   flutter("build", "apk", *flutter_build_args(app, build_number))
+  #   firebase_app_distribution(
+  #     app: ENV["FIREBASE_APP_ID_ANDROID_DEV"],
+  #     android_artifact_type: "APK",
+  #     android_artifact_path: File.join(ROOT, "build/app/outputs/flutter-apk/app-dev-release.apk"),
+  #     groups: ENV["FIREBASE_TESTER_GROUPS"],
+  #     service_credentials_file: ENV["FIREBASE_APP_DISTRIBUTION_CREDENTIALS_FILE"],
+  #     release_notes: release_notes(options, { commit: head_commit }, 4000)
+  #   )
+  # end
+end

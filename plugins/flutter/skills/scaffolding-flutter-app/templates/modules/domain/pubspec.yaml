@@ -1,0 +1,20 @@
+# Pure Dart: no Flutter, no SDKs, no I/O; logs through the pure-Dart `log`. tool/check_layers.dart enforces the
+# import allowlist; keep it in sync when a dependency is added here.
+name: domain
+description: Domain layer
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  log:
+    path: ../logger
+  equatable: ^3.0.0
+  get_it: ^9.2.1 # only for src/di.dart
+
+dev_dependencies:
+  coverage: ^1.11.0 # scripts/test.sh: dart run coverage:test_with_coverage
+  mocktail: ^1.0.4
+  test: ^1.26.0

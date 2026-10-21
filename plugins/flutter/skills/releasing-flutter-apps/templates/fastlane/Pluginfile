@@ -1,0 +1,4 @@
+# fastlane plugins (`bundle exec fastlane add_plugin <name>` adds them here).
+# Loaded by the root Gemfile; run `bundle install` after a change.
+# Optional: Firebase App Distribution for tester builds.
+# gem "fastlane-plugin-firebase_app_distribution"

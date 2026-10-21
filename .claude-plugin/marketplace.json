@@ -1,0 +1,29 @@
+{
+  "name": "agent-kit",
+  "description": "Project-agnostic agent setup for Claude Code and Cursor: working agreement, lead workflow, subagents, and stack rules and skills for Flutter, backends (stack-independent principles, Go), and Firebase Cloud Functions.",
+  "owner": {
+    "name": "agent-kit"
+  },
+  "plugins": [
+    {
+      "name": "core",
+      "source": "./plugins/core"
+    },
+    {
+      "name": "flutter",
+      "source": "./plugins/flutter"
+    },
+    {
+      "name": "backend",
+      "source": "./plugins/backend"
+    },
+    {
+      "name": "go",
+      "source": "./plugins/go"
+    },
+    {
+      "name": "firebase-functions",
+      "source": "./plugins/firebase-functions"
+    }
+  ]
+}

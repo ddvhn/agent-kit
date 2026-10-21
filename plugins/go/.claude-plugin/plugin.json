@@ -1,0 +1,9 @@
+{
+  "name": "go",
+  "displayName": "Agent Kit Go",
+  "description": "Go backends on the backend principles: modular monolith with net/http, oapi-codegen strict server, pgx + sqlc, goose, River; Go language, architecture, data, and testing rules; skills for scaffolding a backend, adding modules, endpoints, use cases, migrations, jobs, tests, and dependency updates.",
+  "dependencies": [
+    "backend"
+  ],
+  "repository": "https://github.com/ddvhn/agent-kit"
+}

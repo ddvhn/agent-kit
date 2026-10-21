@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          checked: true # a wrong type names the JSON key in the exception
+          explicit_to_json: true # nested Api models serialize through toJson
+          field_rename: none # match the backend: snake for snake_case APIs

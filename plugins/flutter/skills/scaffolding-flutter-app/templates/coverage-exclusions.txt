@@ -1,0 +1,13 @@
+# The closed list of code the coverage gate skips (testing rule → Rules).
+# Change it only with a reason in the PR. Globs match paths inside a
+# package, from its lib/ (for example lib/src/foo/foo.g.dart).
+# Generated code
+**/*.g.dart
+**/*.freezed.dart
+**/generated/**
+# Thin SDK adapters whose fakes are tested instead (their mapping and error
+# handling stay covered); list each file, never a folder:
+# lib/src/data_store/device/keystore_device_key_service.dart
+# Web-only alternatives of conditional imports: the VM test run never loads
+# them; the web build and Patrol on Chrome exercise them.
+lib/src/file_log_sink_stub.dart

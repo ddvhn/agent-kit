@@ -1,0 +1,9 @@
+{
+  "name": "flutter",
+  "displayName": "Agent Kit Flutter",
+  "description": "Flutter apps (mobile and web from one project): layer packages and feature folders, blocs, adaptive UI and theming, offline-first data with an action queue and delta sync, contract-generated API clients, DI and environments, widget, golden, and Patrol testing with a coverage gate, fastlane releases, qa subagent (Marionette), localization, audits, and the official Flutter/Dart skills.",
+  "dependencies": [
+    "core"
+  ],
+  "repository": "https://github.com/ddvhn/agent-kit"
+}

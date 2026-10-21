@@ -1,0 +1,23 @@
+# Owns every external dependency: API clients, the database, SDK services —
+# added with the first of each (calling-cloud-functions, persisting-with-isar).
+name: data
+description: Data layer
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  domain:
+    path: ../domain
+  log:
+    path: ../logger
+  get_it: ^9.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.4

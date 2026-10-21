@@ -1,0 +1,12 @@
+{
+  "appTitle": "Foo",
+  "retry": "Try again",
+  "pageNotFound": "This page does not exist.",
+  "errorOffline": "You're offline. Check your connection and try again.",
+  "errorNotFound": "This item is no longer available.",
+  "errorSignedOut": "Please sign in again.",
+  "errorNotAllowed": "You don't have access to this.",
+  "errorTooManyRequests": "Too many attempts. Please try again later.",
+  "errorInvalidInput": "Please check what you entered.",
+  "errorGeneric": "Something went wrong. Please try again."
+}

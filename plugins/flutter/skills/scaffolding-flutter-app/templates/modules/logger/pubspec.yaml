@@ -1,0 +1,18 @@
+# Folder `logger`, package `log`: the name `logger` collides with the pub.dev
+# package of that name as soon as any dependency pulls it in.
+# Pure Dart, so every layer may log, domain included. The app passes the logs
+# directory from `main` (path_provider stays in the app).
+name: log
+description: App logger
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  stack_trace: ^1.12.0
+
+dev_dependencies:
+  coverage: ^1.11.0 # scripts/test.sh: dart run coverage:test_with_coverage
+  test: ^1.26.0

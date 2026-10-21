@@ -1,0 +1,19 @@
+# Pure Dart helpers shared by every layer (extensions, a serial queue, a
+# memory cache). No Flutter: domain depends on it. May re-export `log`.
+name: utils
+description: Shared pure Dart helpers
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  log:
+    path: ../logger
+  collection: ^1.19.1
+  meta: ^1.16.0
+
+dev_dependencies:
+  coverage: ^1.11.0 # scripts/test.sh: dart run coverage:test_with_coverage
+  test: ^1.26.0
