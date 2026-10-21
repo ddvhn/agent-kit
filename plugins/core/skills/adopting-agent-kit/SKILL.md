@@ -147,7 +147,7 @@ No CI is assumed, so the hooks are the gate: a setup script or make target sets 
 
 - `AGENTS.md` (Cursor reads it): two items — how we work comes from agent-kit, synced into `.cursor/rules/kit/` and `.cursor/skills/` (run `bash ~/.claude/plugins/marketplaces/agent-kit/plugins/core/scripts/sync-kit.sh` from the repo root if missing); this project's facts are in `CLAUDE.md` and its conventions in `.claude/rules/`.
 - `README.md` is the newcomer's guide and changes in the same PR as what it describes: prerequisites and tool versions, configuration, running locally, tests and checks, code generation, builds, and deploy once environments exist.
-- `README.md` → "AI agents": where the setup comes from, one-time setup per machine (install Claude Code, `jq`, SSH access to the kit repository without a passphrase prompt, stack tools such as the Patrol CLI, run `claude` and accept the trust prompt), how updates arrive, Cursor fallback, personal overrides.
+- `README.md` → "AI agents": where the setup comes from, one-time setup per machine (install Claude Code, `jq`, read access to the kit repository (none needed when it is public), stack tools such as the Patrol CLI, run `claude` and accept the trust prompt), how updates arrive, Cursor fallback, personal overrides.
 
 ## 6. Verify
 

@@ -88,7 +88,7 @@ for p in $(python3 -c "import json,os;print(' '.join(p['name'] for p in json.loa
 
 ## One-time setup per machine
 
-1. `jq` installed (preinstalled on recent macOS), and SSH access to this repository without a passphrase prompt (key in `ssh-agent`). Claude Code clones it with plain `git`.
+1. `jq` installed (preinstalled on recent macOS), and `git`: Claude Code clones this public repository over HTTPS, so no key or sign-in is needed.
 2. Open Claude Code in a repository that enables the kit and accept the trust prompt; it registers the marketplace and loads the enabled plugins.
 3. Nothing else: Claude Code refreshes the kit within ten minutes after the first message of a session and applies the new version at the next start (or `/reload-plugins`). To pull a change right away: `/plugin marketplace update agent-kit`.
 

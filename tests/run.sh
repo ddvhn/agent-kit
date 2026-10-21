@@ -215,7 +215,9 @@ printf '{"dependencies": {"firebase-functions": "^6.0.0"}}\n' > "$stacks/backend
 mkdir -p "$stacks/server"
 printf 'module example.com/server\n\ngo 1.26\n' > "$stacks/server/go.mod"
 mkdir -p "$tmp/empty"
-for plugin in flutter backend go firebase-functions; do
+for dir in "$kit"/plugins/*/; do
+  plugin=$(basename "$dir")
+  [ "$plugin" = core ] && continue
   [ -f "$kit/plugins/$plugin/stack-markers" ] && ok "$plugin: has stack-markers" || bad "$plugin: no stack-markers"
   rule=$(basename "$(ls "$kit/plugins/$plugin/rules/"*.md | head -1)" .md)
   [ -n "$(CLAUDE_PROJECT_DIR="$stacks" bash "$kit/plugins/$plugin/scripts/print-rule.sh" "$rule")" ] \
@@ -223,6 +225,18 @@ for plugin in flutter backend go firebase-functions; do
   [ -z "$(CLAUDE_PROJECT_DIR="$tmp/empty" bash "$kit/plugins/$plugin/scripts/print-rule.sh" "$rule")" ] \
     && ok "$plugin: silent without its stack" || bad "$plugin: printed rules without its stack"
 done
+only() { # only <folder> <plugins that print>: every stack plugin with markers prints there exactly when listed
+  for dir in "$kit"/plugins/*/; do
+    plugin=$(basename "$dir"); [ -f "$dir/stack-markers" ] || continue
+    rule=$(basename "$(ls "$dir/rules/"*.md | head -1)" .md)
+    out=$(CLAUDE_PROJECT_DIR="$1" bash "$dir/scripts/print-rule.sh" "$rule")
+    case " $2 " in *" $plugin "*) [ -n "$out" ] ;; *) [ -z "$out" ] ;; esac \
+      && ok "$plugin: right with only ${1##*/}" || bad "$plugin: wrong with only ${1##*/}"
+  done
+}
+only "$stacks/app" "flutter"
+only "$stacks/server" "backend go"
+only "$stacks/backend" "backend firebase-functions"
 [ -n "$(CLAUDE_PROJECT_DIR="$tmp/empty" bash "$kit/plugins/core/scripts/print-rule.sh" minimal-change)" ] && ok "core: prints in any folder" || bad "core: silent without a stack"
 mkdir -p "$stacks/app/.git" "$stacks/app/.claude/rules" "$stacks/app/.claude/skills/doing-foo"
 printf -- '---\ndescription: Sample\npaths:\n  - "lib/**"\n---\n\n# Sample\n' > "$stacks/app/.claude/rules/sample.md"
