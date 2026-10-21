@@ -155,6 +155,20 @@ out=$(CLAUDE_PROJECT_DIR="$tmp/flutter" bash "$kit/plugins/core/scripts/print-pr
 echo "$out" | jq -e '.hookSpecificOutput.hookEventName == "SubagentStart" and (.hookSpecificOutput.additionalContext | startswith("# Sample project rule"))' >/dev/null 2>&1 \
   && ok "Plan gets the repository rules as JSON" || bad "print-project-rules.sh output"
 [ -z "$(CLAUDE_PROJECT_DIR="$tmp/firebase-functions" bash "$kit/plugins/core/scripts/print-project-rules.sh")" ] && ok "no Plan context without repository rules" || bad "print-project-rules.sh printed without rules"
+upd="$kit/plugins/core/scripts/update-kit.sh"
+fake="$tmp/fakebin"; home="$tmp/home"
+mkdir -p "$fake" "$home/plugins/marketplaces/agent-kit/.claude-plugin"
+printf '#!/bin/bash\necho "$*" >> "%s/calls"\n' "$tmp" > "$fake/claude"; chmod +x "$fake/claude"
+cp "$kit/.claude-plugin/marketplace.json" "$home/plugins/marketplaces/agent-kit/.claude-plugin/"
+echo '{"version":2,"plugins":{"core@agent-kit":[]}}' > "$home/plugins/installed_plugins.json"
+PATH="$fake:$PATH" CLAUDE_CONFIG_DIR="$home" CLAUDE_CODE_REMOTE= bash "$upd"
+[ ! -e "$tmp/calls" ] && ok "kit update does nothing outside cloud sessions" || bad "kit update ran outside a cloud session"
+out=$(PATH="$fake:$PATH" CLAUDE_CONFIG_DIR="$home" CLAUDE_CODE_REMOTE=true AGENT_KIT_UPDATE_FOREGROUND=1 bash "$upd")
+{ [ -z "$out" ] && grep -qx 'plugin marketplace update agent-kit' "$tmp/calls" && grep -qx 'plugin update core@agent-kit' "$tmp/calls" && grep -qx 'plugin install flutter@agent-kit' "$tmp/calls"; } \
+  && ok "kit update in cloud: refreshes the marketplace, updates installed plugins, installs new ones" || bad "kit update calls: $(tr '\n' ';' < "$tmp/calls" 2>/dev/null)"
+rm -f "$tmp/calls"
+PATH="$fake:$PATH" CLAUDE_CONFIG_DIR="$home" CLAUDE_CODE_REMOTE=true AGENT_KIT_UPDATE_FOREGROUND=1 bash "$upd"
+[ ! -e "$tmp/calls" ] && ok "kit update runs once per container start" || bad "kit update ran twice within the stamp window"
 stacks="$tmp/stacks"
 mkdir -p "$stacks/app" "$stacks/backend/functions"
 printf 'dependencies:\n  flutter:\n    sdk: flutter\n' > "$stacks/app/pubspec.yaml"
