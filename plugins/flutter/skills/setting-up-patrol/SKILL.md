@@ -189,7 +189,7 @@ dependencies:
 }
 ```
 
-- `PROJECT_ROOT` is the folder with the `patrol:` block (`$PWD/apps/foo` in a workspace). Cursor's `.cursor/mcp.json` can use `${workspaceFolder}` instead.
+- `PROJECT_ROOT` is the folder with the `patrol:` block (`$PWD/apps/foo` in a workspace).
 - `PATROL_FLAGS` takes `patrol develop` flags the block does not set: `--device chrome` on web, `--flavor dev` if the block has no flavor.
 - Tools: `run` (`testFile`), `status`, `screenshot`, `native-tree`, `devices`, `quit`.
 

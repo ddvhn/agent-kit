@@ -54,9 +54,4 @@ Shared by every repository that enables the `agent-kit` plugins. Repository spec
 
 - **Kit** (`agent-kit`, auto-updated): this agreement, rules, subagents, hooks, skills. Change shared behavior there, never with local copies.
 - **Repository**: `CLAUDE.md` (project, facts, verification, specs, nuances, related repos), `.claude/rules/` (project conventions on top of the kit rules: real names, paths, libraries, exceptions), `.claude/skills/` (skills that fit only that repository), `.mcp.json`, `.claude/settings.json`.
-- `.cursor/rules/kit/` and `.cursor/skills/` (kit and repository rules and skills) are generated, git-ignored Cursor copies made by the kit's `sync-kit.sh` at session start. Do not edit them.
 - When the user states a generic preference, propose the change to the kit (or to `CLAUDE.md` / `.claude/rules/` if it is project-specific) in the same turn. Kit text stays project-agnostic: placeholders (`Foo`, `FooEntity`), no project names, paths, or identifiers. Project conventions go to the repository's `.claude/rules/`. Check for conflicts with existing rules and ask how to resolve them.
-
-## Cursor
-
-If you are Cursor: this file reaches you as `.cursor/rules/kit/working-agreement.mdc`. Subagents and Claude hooks do not exist for you — do the lead's work directly with the same steps (plan with criteria, tests first, verify with `CLAUDE.md` commands, commit per subtask when approved). If `.cursor/rules/kit/` is missing or stale, run `bash ~/.claude/plugins/marketplaces/agent-kit/plugins/core/scripts/sync-kit.sh` from the repository root and tell the user to start a new chat.
