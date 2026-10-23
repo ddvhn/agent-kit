@@ -130,9 +130,10 @@ Feature `foo`, remote source `{source}`; the project's own layout wins (reposito
 
 ## Checks
 
-- [ ] Spec and acceptance criteria agreed before code; contract confirmed in the backend, or Subtask 0 done first in a backend session
+- [ ] Spec and acceptance criteria agreed before code; contract confirmed in the backend, or Subtask 0's contract PR (with fixtures) merged first in a backend session
 - [ ] Each subtask: tests written first and seen failing for the right reason; narrowest suite green
 - [ ] Decisions from section 2 recorded in the plan; ADR for real alternatives
 - [ ] Every file in section 4 that applies exists, is exported, and is registered
 - [ ] Integration flows cover the acceptance criteria; live check done on a non-production backend
+- [ ] With a new contract: integration pass against the local backend or emulators done and recorded (`core:shipping-feature-branch` → Backend and client)
 - [ ] Spec, `CLAUDE.md`, and rules updated; `reviewing-branch` verdict ready to merge
