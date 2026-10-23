@@ -59,7 +59,7 @@ final class PlaybackBackendApiClient implements BackendApiClient {
 
 ## Scenarios and clock
 
-- `MockScenario` names a fixture folder and an error script: `default`, `empty`, `offline`, `serverDown`, `expiredCursor`, `maxData` (the project adds its own).
+- `MockScenario` names a fixture folder and an error script: `default`, `empty`, `offline`, `serverDown`, `expiredCursor`, `maxData`, `notImplemented` (every draft operation answers `501`, as the real server does: the client shows it as unavailable, and the path with the feature flag off never calls it) (the project adds its own).
 - `SteppableClock` implements the domain clock port; the mock app shows a small debug panel (only in `main_mock.dart`) to pick the scenario and step the clock forward, so time-based states can be demoed.
 
 ## Wiring

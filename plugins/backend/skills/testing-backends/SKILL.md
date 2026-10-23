@@ -31,6 +31,7 @@ Adversarial cases first, the happy path last; each test named after the rule it 
 ## Contract and census
 
 - The API test harness validates every response against the contract with a copy of the spec whose response objects forbid extra properties, so hidden fields stay hidden.
+- Contract fixtures (`designing-api-contracts`, step 7): every fixture validates against its operation's response schema, and every client-facing operation has them.
 - One test per declared error code, provoked through real prior calls for state-based codes; `501` for drafts; a test fails when a stable operation has no handler.
 - Route census: walk the router or the spec; each operation needs a policy and an entry in the RBAC table (allowed role + own scope succeeds; foreign scope, foreign tenant, insufficient role, dismissed member refused).
 - Cross-tenant census (multi-tenant products): tenants A and B; every read, list, delta, export, and signed link with B's ids as A → `404`. Under the application role: no tenant context → no rows; A's context → no B rows; a reference to B's row fails the composite key; append-only tables refuse `UPDATE` / `DELETE`.
