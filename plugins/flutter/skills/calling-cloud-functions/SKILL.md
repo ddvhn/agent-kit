@@ -35,7 +35,7 @@ Future<void> injectDataLayer(
 
 ## Workflow
 
-1. Confirm the exact callable name, region, and payload in the backend (or an existing neighbor).
+1. Confirm the exact callable name, region, and payload in the backend (or an existing neighbor); before the callable exists, in the merged contract schemas and fixtures (`core:shipping-feature-branch` → Backend and client).
 2. Add one method for the endpoint to the backend's API client contract (`abstract interface class BackendApiClient`, or the project's name for it) — not a new client per feature. The method is named exactly like the callable (`getFoo`, `listFoos`, `setFooFavorite`); the repository uses the domain verb (`fetchFoo`) — table in `creating-flutter-repositories`.
 3. Add the wire model (`FooApiModel`, `json_serializable` with `fromJson` / `toJson`) next to its neighbors. JSON keys are camelCase on both sides (`field_rename: none`); backend enums get `@JsonKey(unknownEnumValue: …)`.
 4. Add or extend the DTO and the Api model's adapter (`FooApiModel.toDto()`, request models `FooRequestApiModel.fromDto`; `data` rule): the client method returns `FooApiModel.fromJson(json).toDto()`; the Api model never leaves the client.

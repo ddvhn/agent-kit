@@ -24,7 +24,7 @@ test/main_mock.dart                     # the app with the mock backend
 
 - `mock_api` is a `dev_dependency` of the root app only. Nothing under any `lib/` imports it: `tool/check_layers.dart` denies `package:mock_api/` in the app, `data`, and `ui`. The package itself is not in the layer check's list (its `lib/` imports `package:data/testing.dart` by design), so review its imports by hand.
 - Fixtures are real response bodies (captured from the local backend or the contract's examples) validated against the contract, never hand-edited to shapes the server cannot return. They contain fake names and reserved phone ranges only.
-- **Before the backend exists** (`core:shipping-feature-branch` → Backend and client): fixtures are copied from the contract fixtures the contract PR ships, one folder per scenario, and replaced by captures from the local backend at the integration pass; a difference between the two is a contract defect, fixed through the contract, not by editing the fixture.
+- **Before the backend exists** (`core:shipping-feature-branch` → Backend and client): fixtures are copied from the contract fixtures the contract PR ships, one folder per scenario, and compared with captures from the local backend at the integration pass. A difference is a defect: fix the side that breaks the contract (a backend bug, or the contract and its fixtures through a contract PR), never by editing the copy; captures replace the copies only once they match the contract fixtures.
 
 ## Playback client
 
