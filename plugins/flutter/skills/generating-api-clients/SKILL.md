@@ -22,7 +22,7 @@ modules/data/lib/src/data_store/remote/api/backend/
   models/{feature}/foo_api_mappers.dart      # extensions: generated Foo → FooDto, FooDto → generated request
   http/dio_factory.dart                      # one Dio with interceptors
   # ApiException and sendApiRequest: handling-errors (data_store/remote/api/utils/)
-scripts/sync_contract.sh                     # the contract and shared fixtures from the backend release
+scripts/sync_contract.sh                     # the contract and its fixtures from the backend: the feature branch's merged contract during a feature, the release otherwise
 scripts/generate_api.sh                      # generator + build_runner in modules/generated_api
 ```
 
@@ -197,7 +197,7 @@ In `modules/data/test/api/`, against a stub HTTP session (`http_mock_adapter` or
 
 ## After a contract change
 
-1. `scripts/sync_contract.sh` (the backend's released contract and shared fixtures).
+1. `scripts/sync_contract.sh` (the merged contract and its fixtures: from the backend feature branch while a feature is in flight, `core:shipping-feature-branch` → Backend and client; from the backend release otherwise). The generated-code freshness check compares against the same source.
 2. `scripts/generate_api.sh`; build; fix the mapper extensions the compiler flags.
 3. Tests first for the new fields or codes; then the DTO, mapper, repository.
 4. A removed or renamed field is a breaking change: the backend owns versioning; the client never patches the generated code.

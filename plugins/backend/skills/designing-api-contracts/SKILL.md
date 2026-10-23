@@ -15,7 +15,8 @@ Policy: the `backend-api` rule. Stack how-to after the contract is written: Go `
 4. **Check compatibility** (below). A breaking change to a released operation is a new version plus an ADR (`recording-decisions`), never an edit.
 5. **Regenerate** server and client code (`CLAUDE.md` → Verification) and commit the generated output; the stale-code check must pass.
 6. **Tests first** in the stack (API tests per declared code, contract validation of every response), then the handler; flip the status to `stable` in the same change that makes them pass.
-7. Clients: the client repository regenerates from the merged contract; list the client changes needed in the PR. For a feature with a client, the whole feature contract is its first task PR, with example responses (contract fixtures) for every scenario the client shows, so client work starts on mocks while the backend implements the drafts (`core:shipping-feature-branch` → Backend and client).
+7. **Contract fixtures** for every operation a client calls: example responses beside the contract (for example `api/fixtures/<operationId>/<scenario>.json`), one per scenario the client shows (success, empty, maximum, each declared error code). A test validates every fixture against its operation's response schema and fails for a client-facing operation without fixtures. Fixtures change only in the same PR as the contract and travel with it to the client (the client's contract sync).
+8. Clients: the client repository regenerates from the merged contract; list the client changes needed in the PR. For a feature with a client, the whole feature contract is its first task PR, with example responses (contract fixtures) for every scenario the client shows, so client work starts on mocks while the backend implements the drafts (`core:shipping-feature-branch` → Backend and client).
 
 ## Operation template
 
@@ -61,7 +62,7 @@ Allowed inside `/v1` (additive): a new operation; a new optional request field (
 
 Breaking (new version or a new operation beside the old one): removing or renaming anything; making an optional request field required; tightening a type, format, or limit; changing a field's meaning or units; changing a status code or error code for an existing situation; changing pagination or auth of an existing operation; removing an enum value a client may send.
 
-Draft operations may change shape freely; say so in the PR. Run the breaking-change diff tool when the project has one (`oasdiff breaking old.yaml new.yaml`).
+A draft operation may still change shape, but once a client builds on it (`core:shipping-feature-branch` → Backend and client) every change is its own contract PR with updated fixtures, followed by a client PR; say so in the PR. Run the breaking-change diff tool when the project has one (`oasdiff breaking old.yaml new.yaml`).
 
 ## Review checklist
 
