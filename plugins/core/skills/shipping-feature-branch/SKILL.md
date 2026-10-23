@@ -1,6 +1,6 @@
 ---
 name: shipping-feature-branch
-description: Ship a large feature (size L) on a feature branch — the note to the user before it starts, one small task PR per task into the feature branch (tests-first commit with the red run, implementation, local checks, review loop, PR description with the project's required sections such as Load and Compliance, merge per the project's merge policy), independent tasks in parallel worktrees while others are in review (up to the project's cap), keeping the branch fresh, then the final audit, demo, and merge commit into develop; also the release (develop → main, tag, live smoke, deploy, rollback) and hotfix steps. Use when delivering-changes sizes a request L, or the user asks for a feature branch.
+description: Ship a large feature (size L) on a feature branch — the note to the user before it starts, one small task PR per task into the feature branch (tests-first commit with the red run, implementation, local checks, review loop, PR description with the project's required sections such as Load and Compliance, merge per the project's merge policy), independent tasks in parallel worktrees while others are in review (up to the project's cap), a feature spanning backend and client (the contract PR first with fixtures, then both sides in parallel on mocks, an integration pass before the audit), keeping the branch fresh, then the final audit, demo, and merge commit into develop; also the release (develop → main, tag, live smoke, deploy, rollback) and hotfix steps. Use when delivering-changes sizes a request L, or the user asks for a feature branch.
 ---
 
 # Shipping a feature branch
@@ -10,7 +10,7 @@ The `delivery` rule sets the policy (branches, slices, tests first, merge styles
 ## 1. Plan the feature
 
 - Plan as `delivering-changes` → Plan, with these additions:
-  - the feature branch name `feature/<verb>-<what>`, and for two repositories the same name in both, with the contract and backend tasks first;
+  - the feature branch name `feature/<verb>-<what>`, and for two repositories the same name in both, with the contract task first and then backend and client tasks in parallel (Backend and client below);
   - **tasks**, one PR each, within the slice size (`delivery` rule → Slices); each task lists its subtasks (commits), acceptance criteria, test cases, review zones, and its branch `task/<verb>-<what>`;
   - flags for behavior that stays unfinished between tasks.
 - A plan longer than 1–2 weeks of tasks is split into several features.
@@ -24,7 +24,7 @@ The `delivery` rule sets the policy (branches, slices, tests first, merge styles
 
 1. **Branch**: cut `task/<verb>-<what>` from the current feature branch.
 2. **Read** the task, its requirement IDs and acceptance criteria, the related rules, and the neighbor to copy.
-3. **Contract**: regenerate from the current contract; anything missing → the backend task comes first.
+3. **Contract**: regenerate from the current contract; anything missing → a small contract PR comes first (Backend and client below), never a guessed shape.
 4. **Tests first, visibly**: write the tests (adversarial cases before the happy path), run them, confirm they fail for the right reason, and **commit them alone** (`Add failing tests for <behavior>`). In a typed stack the commit includes compiling stubs (bodies that throw not-implemented) so the analyzer and the pre-commit hook pass and the tests fail at runtime; never `--no-verify`. This is the only failing commit, and it never lands outside its PR. Save the red run summary: command, counts, the first failing lines.
 5. **Implement** through the subtask cycle (`delivering-changes` → Per subtask): delegate, verify, commit per subtask; refactor with the tests green.
 6. **Local checks**: every command in `CLAUDE.md` → Verification, including coverage (never lower than on the feature branch, and at the project gate). Save the green run summary.
@@ -33,6 +33,15 @@ The `delivery` rule sets the policy (branches, slices, tests first, merge styles
 9. **Parallel tasks while others are in review.** With the plan split into small tasks, start further tasks while earlier ones are in review, several at once, as long as each is independent of every task in flight. **Independent** means no shared files, module, API contract operation, or migration; a dependent task waits until the PR it depends on is merged — never stack it on an unreviewed branch. Each parallel task gets its own `task/…` branch and its own worktree (`git worktree add`), cut from the current feature branch, and its own review loop. At most `CLAUDE.md` → Project facts → Parallel tasks are in flight (in progress or in review; default 3). Review-round fixes on a PR in review come first whenever a round finishes.
 10. **Merge** (squash into the feature branch) per the Merge policy once the review loop has ended. A task merging after another one first merges the fresh feature branch into its task branch and reruns the checks (a conflict or a red check means it was not independent: fix it on the task branch; the fix reopens the review loop, so one more verifying round runs before the merge); delete the task branch when the Merge policy allows it or the user asked. Default policy: report the PR and wait.
 11. When `develop` moves: merge `origin/develop` into the feature branch (a merge commit), rerun the checks, fix conflicts as a task of their own.
+
+## Backend and client
+
+A feature that spans a backend and a client does not wait for the backend: the contract is the line between them.
+
+1. **Contract task first.** The first task PR (in the repository that owns the contract, usually the backend) adds every operation, schema, and error code the feature needs, additive only, each operation `draft` (answering `501` until implemented; `designing-api-contracts`). It ships **contract fixtures**: example responses validated against the contract for each scenario the client shows (success, empty, maximum, each declared error). It goes through the review loop like any task and is reviewed for both sides: can the backend build it, does it carry everything the screens need.
+2. **Then in parallel.** Once it merges, backend tasks implement the operations (`draft` → `stable`), and client tasks regenerate the client from the merged contract and build against a mock backend made from the fixtures (the stack skill, for example `flutter:mocking-backend-for-tests`). Client unit, widget, and end-to-end tests run on the mocks. A client task and the backend task for the same operation are independent once the contract merged (step 9); the parallel-task cap counts per repository.
+3. **Contract changes found later.** The backend work finds a missing field or a wrong shape: a small contract PR (additive, fixtures updated) first, then a small client follow-up PR that regenerates and updates the mocks. Never edit generated code or fixtures toward a guess, and never let the two sides drift: the fixtures are the only source the mocks use.
+4. **Integration pass before the audit.** When every operation the feature uses is `stable` on the backend feature branch, run the client against the real backend locally (or on a preview): the same end-to-end scenarios the mocks covered, then a capture of real responses compared with the fixtures. A mismatch is a defect: fix the side that breaks the contract, with a regression test, and correct the fixture through a contract PR if the contract was wrong. Only then the final audits (Finish the feature); the backend feature lands in `develop` first.
 
 ## 4. PR description
 
@@ -75,7 +84,7 @@ A project turns these on in `CLAUDE.md` → Project facts → Required PR sectio
 2. **Demo**: screenshots or a recording of the user path (the stack's QA subagent or the project's E2E run can produce them), or the API scenario with requests and responses for backend-only work, run on the merged result locally or on staging (`delivery` rule → Environments).
 3. Open the feature → `develop` PR: the summary of all tasks (one line each with its PR link), the demo, the checks, and an empty «Review» section.
 4. **Final audit** with `running-review-loop` (feature audit mode). Fixes land as task PRs into the feature branch or as new commits on it; the audit reads the whole diff again each round.
-5. **Merge** with a merge commit, never squash, per the Merge policy; for two repositories the backend feature lands first. Default policy: hand off and wait.
+5. **Merge** with a merge commit, never squash, per the Merge policy; for two repositories the integration pass (Backend and client) has run and the backend feature lands first. Default policy: hand off and wait.
 6. **Handoff**: the PRs (one line each), what was verified and how, the review record, tech debt added, risks, anything not verified.
 
 ## 6. Release and hotfix
