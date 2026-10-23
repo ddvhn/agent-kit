@@ -14,7 +14,7 @@ These principles shape every project that uses the kit. Stack rules apply them; 
 ## Contract-first
 
 - An API between repositories (OpenAPI or an equivalent schema) is the single source for both sides. Models, clients, and server interfaces are generated from it; never hand-write request or response types next to generated ones.
-- Changes inside a version are additive only; a breaking change is a new version. The client never invents an API shape: it builds against the operation in the merged contract, a draft one included (mocked from the contract's fixtures until the server implements it, behind a flag until then).
+- Changes inside a version are additive only; a breaking change is a new version. The client never invents an API shape: it builds against the operation in the merged contract, a draft one included (mocked from the contract's fixtures until the server implements it, behind a flag until the integration pass).
 
 ## Clean Architecture
 

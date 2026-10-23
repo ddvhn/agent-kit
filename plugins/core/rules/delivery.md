@@ -25,7 +25,7 @@ Default: `develop` is the integration branch everything is cut from and lands in
 
 ## Slices
 
-- One task = one PR: about 200–400 changed lines, not counting generated code, translations, fixtures, and golden files. It delivers one user-visible behavior end to end (contract to screen, or the backend equivalent).
+- One task = one PR: about 200–400 changed lines, not counting generated code, translations, fixtures, and golden files. It delivers one user-visible behavior end to end (contract to screen, or the backend equivalent; a contract task is the exception).
 - A larger task is split before coding (one layer, use case, or screen state per PR); a PR over the size states why.
 - Unfinished behavior stays behind a feature flag (or a draft contract operation); `develop` and the feature branch always build and pass.
 - New tasks may run in parallel only when independent of every task in flight; a dependent one waits until the PR it depends on is merged (`shipping-feature-branch` → Per task, step 9).
