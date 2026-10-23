@@ -15,7 +15,7 @@ Policy: the `backend-api` rule. Stack how-to after the contract is written: Go `
 4. **Check compatibility** (below). A breaking change to a released operation is a new version plus an ADR (`recording-decisions`), never an edit.
 5. **Regenerate** server and client code (`CLAUDE.md` → Verification) and commit the generated output; the stale-code check must pass.
 6. **Tests first** in the stack (API tests per declared code, contract validation of every response), then the handler; flip the status to `stable` in the same change that makes them pass.
-7. Clients: the client repository regenerates from the merged contract; list the client changes needed in the PR.
+7. Clients: the client repository regenerates from the merged contract; list the client changes needed in the PR. For a feature with a client, the whole feature contract is its first task PR, with example responses (contract fixtures) for every scenario the client shows, so client work starts on mocks while the backend implements the drafts (`core:shipping-feature-branch` → Backend and client).
 
 ## Operation template
 

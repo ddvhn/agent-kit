@@ -19,7 +19,7 @@ Default: `develop` is the integration branch everything is cut from and lands in
 | `hotfix/<verb>-<what>` — an urgent production fix | `main` | `main` with a patch tag; then `main` → `develop` at once | squash; `main` → `develop` merge commit |
 
 - Names are imperative, lowercase, kebab-case English naming the action (`task/show-foo-list`); no ids, dates, or personal names. A name assigned by the agent environment is used as given.
-- A feature spanning two repositories uses one branch name in both; the contract and backend land first, the client follows.
+- A feature spanning backend and client uses one branch name in both repositories: its contract merges first, then backend and client tasks run in parallel (`shipping-feature-branch` → Backend and client).
 - Keep a feature branch fresh: merge `develop` into it whenever `develop` moves and before the final audit (never rebase or force-push a shared branch). It lives 1–2 weeks; a longer feature is split.
 - Never commit to `develop` or `main` directly.
 

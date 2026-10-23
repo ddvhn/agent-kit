@@ -13,7 +13,7 @@ Policy: core `architecture-principles` (DDD, TDD, offline-first), `same-level-de
 | --- | --- | --- |
 | The nouns, rules, and outcomes, in the spec's and backend's words | feature spec in `docs/` (new or updated) | `recording-decisions`, `modeling-domain` → Ubiquitous language |
 | Acceptance criteria per flow (happy, empty, error, auth) | plan; they become the test cases | `testing-use-cases` |
-| Backend contract: callable names, region, request, response, error codes — existing or new | read in the backend repository (`CLAUDE.md` → Related repositories); a new or changed contract is "ask first" and lands in the backend first (Subtask 0) | `calling-cloud-functions` |
+| Backend contract: callable names, region, request, response, error codes — existing or new | read in the backend repository (`CLAUDE.md` → Related repositories); a new or changed contract is "ask first" and its contract merges first (Subtask 0); the backend implementation runs in parallel with the client subtasks | `calling-cloud-functions` |
 | Paged list? | the shared paged contract: request `cursor` (optional) and `limit`, response `items` and `nextCursor` (null on the last page), camelCase keys; the client keeps the cursor opaque | `paging-lists` |
 | Offline: cached or network-only, what shows offline with and without data, whether writes must work offline | plan; an offline write queue needs an ADR | `data` rule → Caching |
 | Screens and states: entry points (tab, push, modal, deep link), loaded / empty / error / offline / saving, copy, design | plan, approved with it | the project UI skill (`CLAUDE.md` → Project facts), `theming-flutter-apps` |
@@ -46,8 +46,8 @@ Output: the spec, an ADR when a real alternative was chosen, and the plan below.
 ### Subtask 0 — Backend (new or changed contract)
 
 - **Where it runs**: a separate session opened in the backend repository. Its `CLAUDE.md`, `.claude/rules/`, and stack plugin load only there; `--add-dir` gives this session the files but not those plugins or rules. A repository that holds both (`functions/` with both stack plugins enabled) runs it in the same session.
-- **Order**: the backend branch comes first — spec and contract in the backend (it owns the behavior, `recording-decisions`), callable, use case, repository, emulator tests: `firebase-functions:writing-cloud-functions`, `creating-firestore-repositories`, `testing-cloud-functions`. Additive fields or a `fooV2` export, never a breaking change to a deployed callable.
-- **Client side**: client subtasks start once the contract is agreed (their tests mock the API client); the client live check runs against local emulators serving the backend branch until a human deploys it to staging — agents never deploy. Handoff names both branches; the backend merges and deploys before the client ships.
+- **Order**: the contract comes first — spec and contract in the backend (it owns the behavior, `recording-decisions`) with fixtures for each scenario, merged as its own PR (`core:shipping-feature-branch` → Backend and client); then the callable, use case, repository, and emulator tests run in parallel with the client subtasks: `firebase-functions:writing-cloud-functions`, `creating-firestore-repositories`, `testing-cloud-functions`. Additive fields or a `fooV2` export, never a breaking change to a deployed callable.
+- **Client side**: client subtasks start once the contract is merged: the client is generated from it, tests mock the API client, and end-to-end runs use the mock backend built from the contract fixtures (`mocking-backend-for-tests`). A contract change found later reaches the client as a small follow-up subtask. When the backend is done, the integration pass runs the client against local emulators or the local backend serving the backend branch until a human deploys it to staging — agents never deploy. Handoff names both branches; the backend merges and deploys before the client ships.
 
 ### Client subtasks
 
