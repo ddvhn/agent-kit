@@ -1,10 +1,11 @@
 #!/bin/bash
 # SessionStart hook: when the session starts above the repositories (a folder
 # that holds several of them, as cloud sessions over several repositories do),
-# Claude Code loads each repository's CLAUDE.md and its rules without paths:,
-# but not its rules with paths: or its .claude/skills. This lists them per repository, with the paths each rule
-# covers, so the session reads the matching file before working there. Prints
-# nothing when the session starts inside a repository.
+# Claude Code loads each repository's CLAUDE.md and its rules without
+# paths:, but not its rules with paths: or its .claude/skills. This lists
+# them per repository, with the paths each rule covers, so the session
+# reads the matching file before working there. Prints nothing when the
+# session starts inside a repository.
 # Usage: print-nested-repositories.sh
 project=${CLAUDE_PROJECT_DIR:-$PWD}
 [ -e "$project/.git" ] && exit 0
@@ -21,7 +22,7 @@ while IFS= read -r repo; do
       fm && inpaths && /^[[:space:]]*-/ { sub(/^[[:space:]]*-[[:space:]]*/, ""); gsub(/"/, ""); printf "%s`%s`", sep, $0; sep = ", "; next }
       fm && inpaths { inpaths = 0 }
     ' "$f")
-    section+="- \`$rel/${f#"$repo"/}\`: ${paths:-every file}"$'\n'
+    section+="- \`$rel/${f#"$repo"/}\`: ${paths:-every file (already loaded)}"$'\n'
   done < <(find "$repo/.claude/rules" -name '*.md' -type f 2>/dev/null | sort)
   while IFS= read -r f; do
     section+="- skill \`$rel/${f#"$repo"/}\`"$'\n'
@@ -32,5 +33,5 @@ while IFS= read -r repo; do
   out+="$entry"
 done < <(find "$project" -mindepth 2 -maxdepth 3 -name .git -not -path '*/node_modules/*' 2>/dev/null | xargs -r -n1 dirname | sort)
 [ -n "$out" ] || exit 0
-printf '# Repository rules and skills\n\nThis session started above these repositories, so their .claude/rules with paths and their .claude/skills are not loaded. Before reading or editing files in a repository, read its rules whose paths (relative to that repository) match; use a listed skill by reading its SKILL.md when the task fits.\n\n%s' "$out"
+printf '# Repository rules and skills\n\nThis session started above these repositories, so their .claude/rules with paths and their .claude/skills are not loaded. Before reading or editing files in a repository, read its rules whose paths (relative to that repository) match (rules for every file are already loaded); use a listed skill by reading its SKILL.md when the task fits.\n\n%s' "$out"
 exit 0
