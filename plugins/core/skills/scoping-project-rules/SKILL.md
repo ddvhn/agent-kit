@@ -17,7 +17,7 @@ What a typical session loads from a repository stays around 25–30 KB: `CLAUDE.
 
 - List `CLAUDE.md` and every `.claude/rules/*.md` in each repository with its size in bytes, and whether it loads at session start (no `paths:`) or by path.
 - Find the five largest `## …` sections and their sizes.
-- A session started above several repositories loads each repository's `CLAUDE.md` and its rules without `paths:` (README → Repository rules): count a neighbor's general rules in the cost of working on the other repository.
+- A session started above several repositories loads each repository's `CLAUDE.md` and its rules without `paths:` (kit README → Repository rules): count a neighbor's general rules in the cost of working on the other repository.
 
 ## 2. Classify
 
