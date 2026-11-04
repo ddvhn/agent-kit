@@ -201,10 +201,13 @@ only "$stacks/backend" "backend firebase-functions"
 [ -n "$(CLAUDE_PROJECT_DIR="$tmp/empty" bash "$kit/plugins/core/scripts/print-rule.sh" minimal-change)" ] && ok "core: prints in any folder" || bad "core: silent without a stack"
 mkdir -p "$stacks/app/.git" "$stacks/app/.claude/rules" "$stacks/app/.claude/skills/doing-foo"
 printf -- '---\ndescription: Sample\npaths:\n  - "lib/**"\n---\n\n# Sample\n' > "$stacks/app/.claude/rules/sample.md"
+printf -- '---\ndescription: General\n---\n\n# General\n' > "$stacks/app/.claude/rules/general.md"
 printf -- '---\nname: doing-foo\ndescription: Sample\n---\n' > "$stacks/app/.claude/skills/doing-foo/SKILL.md"
 out=$(CLAUDE_PROJECT_DIR="$stacks" bash "$kit/plugins/core/scripts/print-nested-repositories.sh")
 { echo "$out" | grep -qF '`app/.claude/rules/sample.md`: `lib/**`' && echo "$out" | grep -qF 'app/.claude/skills/doing-foo/SKILL.md'; } \
   && ok "session above repositories lists their rules and skills" || bad "print-nested-repositories.sh output"
+{ echo "$out" | grep -qF '`app/.claude/rules/general.md`: every file (already loaded)' && echo "$out" | grep -qF 'rules for every file are already loaded'; } \
+  && ok "session above repositories marks rules without paths as already loaded" || bad "print-nested-repositories.sh does not mark rules without paths as loaded"
 [ -z "$(CLAUDE_PROJECT_DIR="$stacks/app" bash "$kit/plugins/core/scripts/print-nested-repositories.sh")" ] \
   && ok "session inside a repository lists nothing" || bad "print-nested-repositories.sh printed inside a repository"
 for dir in "$kit"/plugins/*/; do
