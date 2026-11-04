@@ -25,8 +25,8 @@ Read each rule and skill and put every paragraph in exactly one bucket:
 | --- | --- |
 | The kit already says it (working agreement, `minimal-change`, a stack rule or skill) | delete |
 | A fact: platform, apps, entry points, branches, suites, commands, ports, accounts, review zones, neighbors to copy | `CLAUDE.md` |
-| A project convention on top of a kit rule: real names, paths, helpers, chosen libraries, allowed exceptions | `.claude/rules/<topic>.md` (topics mirror the kit rules: `architecture`, `dart`, `testing`, `data`, …), with `paths:` on the repository's own files |
-| What one screen or feature does, a later feature's rules, a tool's harness | its own `.claude/rules/screen-<name>.md`, `feature-<name>.md`, `domain-<topic>.md`, or `<rule>-later.md` with `paths:` on its code and tests (`scoping-project-rules` → Classify) |
+| A project convention on top of a kit rule: real names, paths, helpers, chosen libraries, allowed exceptions | `.claude/rules/<topic>.md` (topics mirror the kit rules: `architecture`, `dart`, `testing`, `data`, …) |
+| What one screen or feature does, a later feature's rules, a tool's harness | its own `.claude/rules/screen-<name>.md`, `feature-<name>.md`, `<topic>-later.md`, or `<tool>.md` with `paths:` on its code and tests (`scoping-project-rules` → Classify) |
 | A procedure only this repository needs (a pipeline, a release, a design system) | `.claude/skills/<gerund-name>/SKILL.md` |
 | Generic and missing from the kit | propose a kit change to the user; until it lands, keep it in `.claude/rules/` |
 | A vendored upstream skill the kit does not ship | `.claude/skills/` with its `LICENSE` and `SOURCE.md` |
@@ -147,7 +147,7 @@ No CI is assumed, so the hooks are the gate: a setup script or make target sets 
 
 ## 6. Verify
 
-1. Every `.claude/rules/*.md` has front matter (`description:`, optional `paths:`) and stays under 9,000 characters; `CLAUDE.md` plus the rules without `paths:` stay around 25–30 KB, and each `paths:` glob matches the code and tests it describes (`scoping-project-rules` → Check).
+1. Every `.claude/rules/*.md` has front matter (`description:`, optional `paths:`) and stays under 9,000 characters; what a typical session loads stays around 25–30 KB, and each `paths:` glob matches the code and tests it describes (`scoping-project-rules` → Budget, Check).
 2. Grep the repository for references to deleted files, old skill names, and old marketplaces; fix them.
 3. Ask the user to start a new Claude Code session and check: the working agreement is in context, `core:developer` gets the rules, the commands in `CLAUDE.md` → Verification run.
 

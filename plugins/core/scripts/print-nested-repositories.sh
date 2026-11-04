@@ -1,8 +1,8 @@
 #!/bin/bash
 # SessionStart hook: when the session starts above the repositories (a folder
 # that holds several of them, as cloud sessions over several repositories do),
-# Claude Code loads each repository's CLAUDE.md but not its .claude/rules or
-# .claude/skills. This lists them per repository, with the paths each rule
+# Claude Code loads each repository's CLAUDE.md and its rules without paths:,
+# but not its rules with paths: or its .claude/skills. This lists them per repository, with the paths each rule
 # covers, so the session reads the matching file before working there. Prints
 # nothing when the session starts inside a repository.
 # Usage: print-nested-repositories.sh
@@ -32,5 +32,5 @@ while IFS= read -r repo; do
   out+="$entry"
 done < <(find "$project" -mindepth 2 -maxdepth 3 -name .git -not -path '*/node_modules/*' 2>/dev/null | xargs -r -n1 dirname | sort)
 [ -n "$out" ] || exit 0
-printf '# Repository rules and skills\n\nThis session started above these repositories, so their .claude/rules and .claude/skills are not loaded. Before reading or editing files in a repository, read its rules whose paths (relative to that repository) match; use a listed skill by reading its SKILL.md when the task fits.\n\n%s' "$out"
+printf '# Repository rules and skills\n\nThis session started above these repositories, so their .claude/rules with paths and their .claude/skills are not loaded. Before reading or editing files in a repository, read its rules whose paths (relative to that repository) match; use a listed skill by reading its SKILL.md when the task fits.\n\n%s' "$out"
 exit 0
