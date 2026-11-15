@@ -19,6 +19,7 @@ State the size in the first line of the plan; the user may change it.
 
 ## 1. Plan (M, L)
 
+- Before planning, check that no other session, open PR, or branch in flight changes the same scope (files, module, contract operation, migration); if one does, wait for it to land or ask, never build on top of unmerged work.
 - Use plan mode. Read the code you will change yourself — you review against it later. Broad "where is X" searches go to `Explore`; for L, a `Plan` agent may map the area first. Both start without `CLAUDE.md` (`Plan` gets the kit and repository rules), so the brief carries the project facts they need.
 - Split into **subtasks**, one commit each: one purpose, usually one layer or feature piece, typically under ~300 changed lines, ordered so every commit builds and passes (contract and data → repository → state and UI → polish). The one exception is the red-tests commit that opens a task PR: the only failing commit, and it never lands outside its PR.
 - Per subtask: files and the neighbor to copy, **acceptance criteria** (observable behavior), **test cases** from the implementation's state machine, and whether it touches a review zone.

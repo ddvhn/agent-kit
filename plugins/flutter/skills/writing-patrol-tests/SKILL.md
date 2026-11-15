@@ -292,7 +292,7 @@ final class Keys {
 
 ## Running
 
-- **One file:** the `patrol` MCP when the repository configures it — `run` with `testFile: patrol_test/foo_test.dart` (a second `run` restarts the session), then `status`, `screenshot`, `native-tree`, `quit`. Otherwise the CLI: `patrol test --target patrol_test/foo_test.dart`, plus `--flavor dev` on mobile (unless the `patrol:` block sets it) or `--device chrome` on web, from the folder whose `pubspec.yaml` has the `patrol:` block.
+- **One file:** the `patrol` MCP when the repository configures it — `run` with `testFile: patrol_test/foo_test.dart` (a second `run` restarts the session), then `status`, `screenshot`, `native-tree`, `quit`. Otherwise the CLI: `patrol test --target patrol_test/foo_test.dart`, plus `--flavor dev` on mobile (unless the `patrol:` block sets it) or `--device chrome --web-headless` on web (patrol_cli 4.8+; headless by default so no browser window opens on the user's machine, `--no-web-headless` to watch), from the folder whose `pubspec.yaml` has the `patrol:` block.
 - **Whole suite:** `patrol test` with the same flags, or the project task (a Gradle `integrationTestDev`); slow, so once at the end. The exact commands: `CLAUDE.md` → Verification.
 - A booted emulator or simulator (or Chrome) is required; on Android, prefer an API 34 image: we observed Patrol discovering 0 tests on API 35 images (an observation to recheck with each Patrol release, not a documented limit). `scripts/test.sh e2e` runs on the booted device; it does not start one. Never `flutter test` for Patrol files.
 - The changed feature's files run before each PR; the whole suite before a feature branch merges and before a release (`writing-patrol-tests` → Policy).

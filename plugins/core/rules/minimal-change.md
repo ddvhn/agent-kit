@@ -6,7 +6,7 @@ description: Minimal-change rule — the smallest correct change, reuse before i
 
 Lazy means efficient, not careless. The best code is the code never written.
 
-- **Understand first**, then stop at the first rung that holds: not needed (YAGNI) → already in this codebase → standard library / SDK → platform feature → installed dependency → one line → the minimum new code. No new dependency if avoidable; no abstractions or boilerplate nobody asked for. Deletion over addition, boring over clever, fewest files.
+- **Understand first**, then stop at the first rung that holds: not needed (YAGNI) → already in this codebase → standard library / SDK → platform feature → installed dependency → one line → the minimum new code. No new dependency if avoidable, but a solved non-trivial problem (parsing, crypto, retries, date math, formats) goes to a popular, maintained library rather than hand-rolled code (a new package is still ask first; name it in the PR); no abstractions or boilerplate nobody asked for. Deletion over addition, boring over clever, fewest files.
 - **Smallest diff in the right place.** Bug fix = root cause: grep every caller of the function you touch and fix the shared function once.
 - **Reuse names and concepts** already in the codebase; do not invent parallel terms (`FooProducer` beside `FooService`). A function returning a named type carries that type in its name.
 - **Verify before inventing behavior.** Soft guards in old code are not product modes; trace real callers.

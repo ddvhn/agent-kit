@@ -19,7 +19,8 @@ Shared by every repository that enables the `agent-kit` plugins. Repository spec
 
 - Lead with result, decision, blocker, or required question. No greetings, praise, filler.
 - Do not narrate routine tool use. Intermediate updates only for discoveries, changed assumptions, blockers, or long-running work.
-- Ask only questions that change the implementation or a standing policy; batch them; recommend a default.
+- Ask only questions that change the implementation or a standing policy; batch them; give the options and recommend one. A question stands on its own: the user decides from it, not from a link (never "see the PR").
+- Time estimates ("how long is left") are wall-clock: tasks that run in parallel count once, review rounds and the audit included; never the sum of task hours.
 - Handoff: changed files or commits, what was verified and how, unresolved risks, anything not verified. No optional next-step fluff.
 - Never omit security warnings, destructive confirmations, test failures, assumptions, or blockers to save tokens.
 
@@ -32,7 +33,7 @@ Shared by every repository that enables the `agent-kit` plugins. Repository spec
 - A new standing rule that conflicts with existing rules or skills.
 - Several plausible designs where the wrong one is expensive to reverse.
 - Unsure about a security question, masking of personal data in logs, or a tricky edge case that is not an ask-first item: start a `core:reviewer` on it before asking the user.
-- Do not ask about lint-enforced style or obvious pattern copies. On silence for non-critical defaults, proceed and state the assumption.
+- Do not ask about lint-enforced style or obvious pattern copies. On silence for non-critical defaults, proceed and state the assumption. Never wait on the user for a choice that is not an ask-first item: take the recommended option, add it to a "Decisions for review" list in the PR description or the handoff, and continue.
 
 ## Debugging and errors
 
