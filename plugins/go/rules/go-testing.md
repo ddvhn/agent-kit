@@ -16,3 +16,4 @@ How-to and templates: `testing-go-backends`; the harness: `scaffolding-go-backen
 - Packages with integration or API tests have a `TestMain` that blocks outbound network, refuses live-provider variables, and scans the run's logs for personal data.
 - `pgregory.net/rapid` for invariants; native fuzz tests for handwritten decoders.
 - Coverage: `go test -coverpkg=./... -coverprofile`, filtered by `coverage-exclusions.txt`. Every PR states it ran `make check`; hooks are never skipped.
+- Mutation tests on changed logic once its coverage is full: Gremlins on the changed packages over their `-short` tests (`running-mutation-tests`).

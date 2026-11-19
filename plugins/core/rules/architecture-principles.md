@@ -42,6 +42,7 @@ Scaled to size: full DDD where the domain is rich; DDD-lite for small services â
 - **Edge cases on purpose**: each test file goes through this checklist and covers every item that applies: empty, one, many; zero, negative, maximum, and maximum + 1; missing, null, and unknown enum values; Unicode and very long text; time boundaries (just before, exactly at, just after; midnight, DST days, another zone; the clock injected, never the wall clock); repeated and concurrent calls and retries (same idempotency key); each role and permission combination. Table-driven tests for cross products of inputs that matter, property-based tests for invariants; every error code an operation declares has a test that provokes it.
 - Every I/O boundary has a double; test data uses fake names and reserved number ranges, never real people's data.
 - A test that cannot fail when the logic breaks is not a test. Never weaken, skip, or delete a test to get green.
+- **Then mutation testing.** Once the changed logic has full line coverage, run mutation tests on the changed files only, locally before the push; every surviving mutant gets a test, or is recorded as equivalent or excluded as noise (logging, visual widget properties). CI at most checks that a recorded score did not drop (`running-mutation-tests`).
 - `delivering-changes` runs this per subtask (tests first, confirm they fail for the right reason).
 
 ## Engineering principles

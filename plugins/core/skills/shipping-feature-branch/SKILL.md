@@ -27,7 +27,7 @@ The `delivery` rule sets the policy (branches, slices, tests first, merge styles
 3. **Contract**: regenerate from the current contract; anything missing → a small contract PR comes first (Backend and client below), never a guessed shape.
 4. **Tests first, visibly**: write the tests (adversarial cases before the happy path), run them, confirm they fail for the right reason, and **commit them alone** (`Add failing tests for <behavior>`). In a typed stack the commit includes compiling stubs (bodies that throw not-implemented) so the analyzer and the pre-commit hook pass and the tests fail at runtime; never `--no-verify`. This is the only failing commit, and it never lands outside its PR. Save the red run summary: command, counts, the first failing lines.
 5. **Implement** through the subtask cycle (`delivering-changes` → Per subtask): delegate, verify, commit per subtask; refactor with the tests green.
-6. **Local checks**: every command in `CLAUDE.md` → Verification, including coverage (never lower than on the feature branch, and at the project gate). Save the green run summary.
+6. **Local checks**: every command in `CLAUDE.md` → Verification, including coverage (never lower than on the feature branch, and at the project gate). Then mutation tests on the changed logic files (`running-mutation-tests`): tests for real survivors, the rest recorded. Save the green run summary and the mutation score.
 7. **Open the PR** into the feature branch with the description below when the Merge policy allows it or the user asked; otherwise prepare the description for the handoff.
 8. **Review loop** with `running-review-loop` (task mode).
 9. **Parallel tasks while others are in review.** With the plan split into small tasks, start further tasks while earlier ones are in review, several at once, as long as each is independent of every task in flight. **Independent** means no shared files, module, API contract operation, or migration (a backend task and a client task that only consume the same merged contract operation are independent: Backend and client); a dependent task waits until the PR it depends on is merged — never stack it on an unreviewed branch. Each parallel task gets its own `task/…` branch and its own worktree (`git worktree add`), cut from the current feature branch, and its own review loop. At most `CLAUDE.md` → Project facts → Parallel tasks are in flight per repository (in progress or in review; default 3). Review-round fixes on a PR in review come first whenever a round finishes.
@@ -53,6 +53,7 @@ A feature that spans a backend and a client does not wait for the backend: the c
 - Added: <test files or cases, adversarial ones first>
 - Red run (commit <sha>): `<command>` — <N failed>, <first failing lines>
 - Green run (commit <sha>): `<command>` — <N passed>, coverage <x>% (gate <y>%)
+- Mutation: `<config>` <killed>/<total> (base <killed>/<total>); tests added for survivors; accepted survivors with their reason (or "no logic changed")
 
 ## Checks
 - `<command>` — pass
