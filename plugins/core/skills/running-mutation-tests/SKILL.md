@@ -12,7 +12,7 @@ Policy: core `architecture-principles` → Test-Driven Development. The project'
 ## When
 
 - **Order**: tests first (red, then green), then full line coverage of the changed code, then mutation testing on top. Mutating uncovered code only reports what coverage already showed.
-- **Locally, before the PR is pushed**, on the files the change touched — never the whole codebase. Rerun after adding tests until every survivor is either killed or recorded.
+- **Locally, before the PR is pushed**, on the files the change touched — never the whole codebase. Rerun after adding tests until every survivor is killed, excluded, or recorded.
 - **Where it pays**: domain logic, state machines and their transitions, calculators, money, time and deadlines, parsers and mappers, repositories with rules in their queries, controllers that decide. Skip generated code, thin SDK adapters, DI wiring, and pure layout widgets.
 - **Only suites fast enough to run per mutant**: unit tests and fast widget or emulator tests. E2E and device tests (Patrol, browser flows) are too slow; behavior they alone guard needs a unit test first.
 - **CI**, when the project has one, at most checks that the score of a configured area did not drop below the recorded one. It never runs the full mutation suite on every push.
@@ -66,4 +66,4 @@ Flutter example layout: `scripts/mutation/run.sh [config]` (installs the pinned 
 
 - Every changed file in a logic area ran through its config after its tests reached full line coverage.
 - Every survivor is killed by a new test, excluded as noise in the config, or recorded as equivalent with its reason.
-- The score is in the PR; when the whole area ran, also in the README and not lower than the base.
+- The score is in the PR; accepted survivors are in the README table; when the whole area ran, the score is also in the README and not lower than the base.
