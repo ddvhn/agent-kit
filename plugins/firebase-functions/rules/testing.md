@@ -34,6 +34,8 @@ The emulator serializes requests; production runs concurrently. A green suite do
 
 Tests derive from the state machine (every transition, edge, schema min / max) and each fails if its logic breaks. The gate is the project's (`backend-testing` rule → Must cover); migrator suites cover every version hop.
 
+Mutation tests on changed logic once its coverage is full (`running-mutation-tests`): Stryker with the Vitest runner, `mutate` scoped to the changed files, the integration folder left out, the emulators started once outside the run, `concurrency: 1` (workers would reset each other's emulator data). Only in-process suites see a mutant (pure domain units, repositories and migrators on the Firestore emulator); the Functions emulator runs the compiled build, so integration tests never do. A rule only integration tests guard moves into a pure domain function with unit tests first.
+
 ## Test code isolation
 
 - Test code stays in the test tree. Production source never imports test code, except the one documented test-mode gate that loads the mock composition root in the emulator.

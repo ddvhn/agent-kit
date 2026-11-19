@@ -40,7 +40,7 @@ State the size in the first line of the plan; the user may change it.
 ## 3. Finish
 
 1. **UI changed** → one live QA pass with the stack's QA subagent when it has one (Flutter: `flutter:qa`) over the changed flows and their neighbors. Fixes go through the subtask cycle as new commits; `qa` re-checks only the fixed scenarios. Scenarios that broke or easily could → E2E tests via `core:developer`.
-2. **Own check**: the full checks from `CLAUDE.md` → Verification on the branch against the PR's base (`develop` or the feature branch), and a read of the whole diff. This is the lead's check, not a review; the independent review is the loop in step 3 (round 1 replaces a separate `reviewing-branch` pass). Fix findings as new commits; do not rewrite reviewed history unless asked.
+2. **Own check**: the full checks from `CLAUDE.md` → Verification on the branch against the PR's base (`develop` or the feature branch), then mutation tests on the changed logic files once their coverage is full (`running-mutation-tests`; tests for real survivors go through the subtask cycle), and a read of the whole diff. This is the lead's check, not a review; the independent review is the loop in step 3 (round 1 replaces a separate `reviewing-branch` pass). Fix findings as new commits; do not rewrite reviewed history unless asked.
 3. **PR and review loop**: under a project Merge policy, push and open the PR; under the default policy, do that only when asked. The description follows `shipping-feature-branch` → PR description. The review loop with `running-review-loop` runs either way — on the PR, or on the finished branch with the record in the handoff when there is no PR. Merge per the Merge policy (task and standalone PRs squash). While the PR is in review, further tasks may run in parallel when independent of every task in flight; a dependent one waits until the PR it depends on is merged (`shipping-feature-branch` → Per task, step 9).
 4. **Handoff**: commits (one line each), the PR and its review summary, specs and ADRs touched, what was verified and how, risks, anything not verified.
 
@@ -49,7 +49,7 @@ State the size in the first line of the plan; the user may change it.
 A change is done when every line holds (the PR states each):
 
 - Requirement IDs named (when the project uses them); every acceptance criterion covered by a test that failed first (the red run); every new screen state has its golden or snapshot where the stack uses them.
-- Edge cases, boundaries, and odd combinations tested (`architecture-principles` → Test-Driven Development); coverage at the project gate and never lower than the base.
+- Edge cases, boundaries, and odd combinations tested (`architecture-principles` → Test-Driven Development); coverage at the project gate and never lower than the base; mutation tests run on the changed logic files, every survivor killed, excluded as noise, or recorded with its reason (`running-mutation-tests`).
 - Generated code in sync with its inputs (the contract, schemas, translations); every command in `CLAUDE.md` → Verification passed locally, stated with the command.
 - Every section in `CLAUDE.md` → Project facts → Required PR sections filled (or "no change"); concerns there agreed with the user before implementation.
 - The review loop ended (`running-review-loop`): no unresolved thread.

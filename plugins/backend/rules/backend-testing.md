@@ -25,6 +25,7 @@ Applies core `architecture-principles` → Test-Driven Development. Patterns, th
 - Route census: every route has a policy and an RBAC test. When multi-tenant, a cross-tenant census: every read with another tenant's ids → `404`.
 - Retried writes: same key twice, concurrently, and after a timeout → one effect. Concurrent actions on one aggregate run real transactions; the loser gets a stable code.
 - Every behavior has a test that fails when it breaks. A coverage gate is the project's choice (recommended: 100% of handwritten code with a closed exclusion list); coverage never drops.
+- Mutation tests on changed logic once its coverage is full, locally before the push; survivors get tests or a recorded reason (`running-mutation-tests`).
 
 ## Doubles
 

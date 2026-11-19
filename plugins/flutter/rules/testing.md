@@ -26,5 +26,6 @@ One behavior, one owning suite; a higher suite does not repeat a lower one's edg
 - Time is injected; no test sleeps or reads the wall clock. Reset the service locator, database, and mocks per test.
 - Every enum from the API has a test with an unknown value.
 - **Coverage**: the recommended gate is 100% of handwritten lines per package, with a closed `coverage-exclusions.txt` (generated code, `main*.dart` and `bootstrap.dart`, thin SDK adapters, web-only conditional-import files), changed only with a reason; a package without tests or a file no test loads fails the gate. The project states its gate in Verification; coverage never drops.
+- **Mutation tests** on changed logic once its coverage is full: `mutation_test` with one XML config per area over the unit and widget tests that guard it (never Patrol), staged with `flutter test --timeout` (`running-mutation-tests`).
 - A test that fails without a code change is a defect; never skip or quarantine to get green.
 - One script runs the suites (`scripts/test.sh unit | e2e | live`); git hooks run format, analyze, and `gitleaks` before a commit and the unit suite before a push. Never `--no-verify`.

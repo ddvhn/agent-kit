@@ -26,7 +26,7 @@ Adversarial cases first, the happy path last; each test named after the rule it 
 - **Table-driven** over the cross product of the inputs that matter (status × actor × timer state).
 - **Property-based** for invariants: balance = sum of entries, every non-terminal state reaches a terminal one, ordering is total and stable, encode ∘ decode = identity.
 - **Fuzzing** for every handwritten parser and decoder the contract validation does not cover (cursors, signed payloads, money, ids, instants).
-- **Mutation testing** later, on money, state machines, and time; a surviving mutant is a missing test.
+- **Mutation testing** on changed logic once its coverage is full (money, state machines, and time first); a surviving mutant is a missing test or a recorded equivalent (`running-mutation-tests`).
 
 ## Contract and census
 
