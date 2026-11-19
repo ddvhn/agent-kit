@@ -37,7 +37,7 @@ Open the report and sort every survivor into exactly one bucket:
 | **Real gap** — the mutant changes behavior a user, caller, or stored record could see | A test that fails on the mutant and passes on the original; adversarial first, named after the rule it protects. A real bug the mutant exposes follows the bug rule (failing test committed alone, then the fix). |
 | **Equivalent** — the mutant computes the same result for every reachable input (`>= length` where only `-1` reaches the guard; `% n` where the value is never negative; whitespace or formatting) | Record it with the reason. If the original is misleading, simplify the code so the mutant disappears; never add a test that only pins an implementation detail. |
 | **Noise** — logging, debug output, analytics labels, purely visual widget properties (padding, color, an icon) | Exclude the pattern in the config; a visual change belongs to golden or snapshot tests, not to mutants. |
-| **Timing** — killed in some runs and surviving in others | Either a race in the code (a real gap: a test with provider hooks or a steppable clock) or a flaky test, which the `delivery` rule → Checks covers (fixed or deleted, never recorded as accepted). Never rerun until green. |
+| **Timing** — killed in some runs and surviving in others | Either a race in the code (a real gap: a test with provider hooks or a steppable clock) or a flaky test: fixed or deleted, never recorded as accepted (`delivery` rule → Checks). Never rerun until green. |
 
 A survivor is never "accepted" because a test would be hard to write: a hard-to-reach branch is a design smell (extract the decision into a pure function and test that). A test added for a survivor still respects the owning-suite rule and asserts behavior, not internals.
 
