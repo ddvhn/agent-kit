@@ -25,7 +25,7 @@ Every mutant reruns the selected tests, so a run costs `mutants × test time`. K
 - Fast tests first, slower ones after, so a killed mutant stops early (staged test commands).
 - A **per-test timeout** (about 10 s, well above the slowest test's normal run): a mutant that makes a loop hang must fail fast instead of waiting for the runner's default.
 - Exclude noise in the config, not in triage: logging calls, debug-only branches, `assert`s, string literals (copy), generated files.
-- Some tools (Dart `mutation_test`, Cosmic Ray, mutmut 2) edit source files in place while they run: start from a clean tree for the mutated paths, restore them on exit (also on Ctrl+C), and run two configs in parallel only in separate checkouts or worktrees. The others work on a copy or in memory.
+- Some tools (Dart `mutation_test`, Cosmic Ray, mutmut 2, go-mutesting) edit source files in place while they run: start from a clean tree for the mutated paths, restore them on exit (also on Ctrl+C), and run two configs in parallel only in separate checkouts or worktrees. The others work on a copy or in memory.
 - Tests that share external state (an emulator, a database) run with one worker per state: concurrency 1, or one project or database per worker.
 
 ## Triage
@@ -44,8 +44,8 @@ A survivor is never "accepted" because a test would be hard to write: a hard-to-
 ## Record
 
 - **In the repository**: the run script, one config per area, and a short README beside them with the command, each config's files and score (killed / total, with the date), and a table of accepted survivors (`file:line` at the time of the run, the mutant, why it is not a gap).
-- **Score** = killed ÷ (total − recorded equivalents), as a percentage; a new or temporary config has "base: none".
-- **In the PR**, under Tests: `Mutation: <config> <killed>/<total>, <score>% (base <score>% or none)`, the tests added for survivors, and the survivors accepted with their reason. A score never drops without a recorded reason.
+- **Score** = killed ÷ (total − recorded equivalents), as a percentage. A run on the changed files only has no base: its gate is every survivor killed, excluded, or recorded. "Not lower than the base" compares whole-area runs only (a score refresh, a CI check); a new area has "base: none".
+- **In the PR**, under Tests: `Mutation: <files or config> <killed>/<total>, <score>%`, the tests added for survivors, and the survivors accepted with their reason; for a whole-area run also `(base <score>% or none)`. A whole-area score never drops without a recorded reason.
 
 ## Tools by stack
 
@@ -66,4 +66,4 @@ Flutter example layout: `scripts/mutation/run.sh [config]` (installs the pinned 
 
 - Every changed file in a logic area ran through its config after its tests reached full line coverage.
 - Every survivor is killed by a new test, excluded as noise in the config, or recorded as equivalent with its reason.
-- The score is in the PR and in the README, and it is not lower than the base.
+- The score is in the PR; when the whole area ran, also in the README and not lower than the base.

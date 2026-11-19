@@ -49,7 +49,7 @@ State the size in the first line of the plan; the user may change it.
 A change is done when every line holds (the PR states each):
 
 - Requirement IDs named (when the project uses them); every acceptance criterion covered by a test that failed first (the red run); every new screen state has its golden or snapshot where the stack uses them.
-- Edge cases, boundaries, and odd combinations tested (`architecture-principles` → Test-Driven Development); coverage at the project gate and never lower than the base; mutation tests run on the changed logic files, every survivor killed or recorded with its reason, the score not lower than the base (`running-mutation-tests`).
+- Edge cases, boundaries, and odd combinations tested (`architecture-principles` → Test-Driven Development); coverage at the project gate and never lower than the base; mutation tests run on the changed logic files, every survivor killed, excluded as noise, or recorded with its reason (`running-mutation-tests`).
 - Generated code in sync with its inputs (the contract, schemas, translations); every command in `CLAUDE.md` → Verification passed locally, stated with the command.
 - Every section in `CLAUDE.md` → Project facts → Required PR sections filled (or "no change"); concerns there agreed with the user before implementation.
 - The review loop ended (`running-review-loop`): no unresolved thread.
