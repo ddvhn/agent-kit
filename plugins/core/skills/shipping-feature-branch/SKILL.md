@@ -53,7 +53,7 @@ A feature that spans a backend and a client does not wait for the backend: the c
 - Added: <test files or cases, adversarial ones first>
 - Red run (commit <sha>): `<command>` — <N failed>, <first failing lines>
 - Green run (commit <sha>): `<command>` — <N passed>, coverage <x>% (gate <y>%)
-- Mutation: `<config>` <killed>/<total> (base <killed>/<total>); tests added for survivors; accepted survivors with their reason (or "no logic changed")
+- Mutation: `<config>` <killed>/<total>, <score>% (base <score>% or none); tests added for survivors; accepted survivors with their reason (or "no logic changed")
 
 ## Checks
 - `<command>` — pass

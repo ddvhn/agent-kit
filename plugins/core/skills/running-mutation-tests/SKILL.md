@@ -21,11 +21,12 @@ Policy: core `architecture-principles` → Test-Driven Development. The project'
 
 Every mutant reruns the selected tests, so a run costs `mutants × test time`. Keep it small:
 
-- **One config per area** (a feature, a state machine, a group of related files), each listing its source files and only the tests that guard them. A changed file picks its area's config, or a temporary one listing just that file.
+- **One config per area** (a feature, a state machine, a group of related files), each listing its source files and only the tests that guard them. A change runs its area's tests but mutates only the changed files (Stryker `--mutate <files>`, Gremlins `--diff <base>`, PIT `targetClasses`, a temporary `mutation_test` config listing those files); the whole area runs only when its recorded score is refreshed.
 - Fast tests first, slower ones after, so a killed mutant stops early (staged test commands).
 - A **per-test timeout** (about 10 s, well above the slowest test's normal run): a mutant that makes a loop hang must fail fast instead of waiting for the runner's default.
 - Exclude noise in the config, not in triage: logging calls, debug-only branches, `assert`s, string literals (copy), generated files.
-- Most tools edit source files in place while they run. Start from a clean tree for the mutated paths, restore them on exit (also on Ctrl+C), and run two configs in parallel only in separate checkouts or worktrees.
+- Some tools (Dart `mutation_test`, Cosmic Ray, mutmut 2) edit source files in place while they run: start from a clean tree for the mutated paths, restore them on exit (also on Ctrl+C), and run two configs in parallel only in separate checkouts or worktrees. The others work on a copy or in memory.
+- Tests that share external state (an emulator, a database) run with one worker per state: concurrency 1, or one project or database per worker.
 
 ## Triage
 
@@ -36,14 +37,15 @@ Open the report and sort every survivor into exactly one bucket:
 | **Real gap** — the mutant changes behavior a user, caller, or stored record could see | A test that fails on the mutant and passes on the original; adversarial first, named after the rule it protects. A real bug the mutant exposes follows the bug rule (failing test committed alone, then the fix). |
 | **Equivalent** — the mutant computes the same result for every reachable input (`>= length` where only `-1` reaches the guard; `% n` where the value is never negative; whitespace or formatting) | Record it with the reason. If the original is misleading, simplify the code so the mutant disappears; never add a test that only pins an implementation detail. |
 | **Noise** — logging, debug output, analytics labels, purely visual widget properties (padding, color, an icon) | Exclude the pattern in the config; a visual change belongs to golden or snapshot tests, not to mutants. |
-| **Timing** — survives in some runs because the result depends on scheduling | Treat as a real gap when the code has a race; otherwise record it as flaky with the reason, never retry until green. |
+| **Timing** — killed in some runs and surviving in others | Either a race in the code (a real gap: a test with provider hooks or a steppable clock) or a flaky test, which the `delivery` rule → Checks covers (fixed or deleted, never recorded as accepted). Never rerun until green. |
 
 A survivor is never "accepted" because a test would be hard to write: a hard-to-reach branch is a design smell (extract the decision into a pure function and test that). A test added for a survivor still respects the owning-suite rule and asserts behavior, not internals.
 
 ## Record
 
 - **In the repository**: the run script, one config per area, and a short README beside them with the command, each config's files and score (killed / total, with the date), and a table of accepted survivors (`file:line` at the time of the run, the mutant, why it is not a gap).
-- **In the PR**, under Tests: `Mutation: <config> <killed>/<total> (base <killed>/<total>)`, the tests added for survivors, and the survivors accepted with their reason. A score never drops without a recorded reason.
+- **Score** = killed ÷ (total − recorded equivalents), as a percentage; a new or temporary config has "base: none".
+- **In the PR**, under Tests: `Mutation: <config> <killed>/<total>, <score>% (base <score>% or none)`, the tests added for survivors, and the survivors accepted with their reason. A score never drops without a recorded reason.
 
 ## Tools by stack
 
@@ -54,7 +56,7 @@ Pick the stack's established tool; install it as a dev tool, not a runtime depen
 | Dart / Flutter | `mutation_test` (pub.dev, global activate) | XML config per area: `<files>`, `<exclude>` regexes for logging and asserts, `<commands>` with the staged `flutter test --timeout` call; `--exclude-strings`, `--format html` |
 | TypeScript / JavaScript | Stryker (`@stryker-mutator/core` with the Vitest or Jest runner) | `--mutate` globs or `mutate` in the config, `--incremental` to reuse earlier results, `thresholds.break` for a CI floor, `ignoreStatic` for module-level code |
 | Python | mutmut or Cosmic Ray | `paths_to_mutate` per area, the pytest command narrowed to the area's tests |
-| Go | Gremlins (`gremlins unleash`) or go-mutesting | the changed packages only, over their `-short` tests |
+| Go | Gremlins (`gremlins unleash`) or go-mutesting | packages whose tests need no database (domain, app), or database tests split off by a build tag (`--tags`); `--diff <base>` to mutate only changed code |
 | JVM (Kotlin, Java) | PIT (`pitest`) with the Gradle or Maven plugin | `targetClasses` / `targetTests` per area, `withHistory` for incremental runs |
 | Swift | Muter | `muter.conf.yml` `exclude` and the test command per scheme |
 
